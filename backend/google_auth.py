@@ -1,18 +1,18 @@
 from google.oauth2 import id_token
-from google.auth.transport import requests
+from google.auth.transport.requests import Request
 from fastapi import HTTPException
-from backend.models import User
-from backend.security import create_access_token
+from models import User
+from security import create_access_token
 import os
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 
 if not GOOGLE_CLIENT_ID:
-    raise Exception("GOOGLE_CLIENT_ID environment variable not set!")
+    raise Exception("Google client ID not set in environment variables!")
 
 def handle_google_signup_or_login(token: str, db):
     try:
-        info = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_CLIENT_ID)
+        info = id_token.verify_oauth2_token(token, Request(), GOOGLE_CLIENT_ID)
 
         email = info["email"]
         first_name = info.get("given_name", "User")
@@ -35,5 +35,5 @@ def handle_google_signup_or_login(token: str, db):
         jwt_token = create_access_token(user.email)
         return {"access_token": jwt_token}
 
-    except Exception:
+    except Exception as e:
         raise HTTPException(status_code=400, detail="Invalid Google token")

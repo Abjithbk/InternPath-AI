@@ -1,10 +1,10 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-
-from backend.database import SessionLocal, engine
-from backend import models, schemas
-from backend.security import hash_password, verify_password, create_access_token
-from backend.google_auth import handle_google_signup_or_login
+from database import SessionLocal, engine
+import models
+from schemas import SignupSchema, LoginSchema, GoogleAuthSchema
+from security import hash_password, verify_password, create_access_token
+from google_auth import handle_google_signup_or_login
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -18,7 +18,7 @@ def get_db():
         db.close()
 
 @app.post("/signup")
-def manual_signup(data: schemas.SignupSchema, db: Session = Depends(get_db)):
+def manual_signup(data: SignupSchema, db: Session = Depends(get_db)):
     existing = db.query(models.User).filter(models.User.email == data.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -39,7 +39,7 @@ def manual_signup(data: schemas.SignupSchema, db: Session = Depends(get_db)):
     return {"message": "Signup successful"}
 
 @app.post("/login")
-def manual_login(data: schemas.LoginSchema, db: Session = Depends(get_db)):
+def manual_login(data: LoginSchema, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == data.email).first()
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
@@ -54,5 +54,5 @@ def manual_login(data: schemas.LoginSchema, db: Session = Depends(get_db)):
     return {"access_token": token}
 
 @app.post("/google-auth")
-def google_signup_or_login(data: schemas.GoogleAuthSchema, db: Session = Depends(get_db)):
+def google_signup_or_login(data: GoogleAuthSchema, db: Session = Depends(get_db)):
     return handle_google_signup_or_login(data.token, db)
