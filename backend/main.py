@@ -1,14 +1,27 @@
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+
+# Local imports (Works when Root Directory = backend)
 from database import SessionLocal, engine
 import models
 from schemas import SignupSchema, LoginSchema, GoogleAuthSchema
 from security import hash_password, verify_password, create_access_token
 from google_auth import handle_google_signup_or_login
 
+# Create Tables
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+# Add CORS so Frontend can talk to Backend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Change this to your frontend URL in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def get_db():
     db = SessionLocal()
@@ -16,6 +29,10 @@ def get_db():
         yield db
     finally:
         db.close()
+
+@app.get("/")
+def health_check():
+    return {"status": "ok", "message": "Backend is running"}
 
 @app.post("/signup")
 def manual_signup(data: SignupSchema, db: Session = Depends(get_db)):
