@@ -67,7 +67,7 @@ def manual_login(data: LoginSchema, db: Session = Depends(get_db)):
     if not verify_password(data.password, user.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    token = create_access_token(user.email)
+    token = create_access_token(data={"sub": user.email})
     return {"access_token": token}
 
 @app.post("/google-auth")
