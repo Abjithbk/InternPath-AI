@@ -1,0 +1,10 @@
+# Ignore Virtual Environment
+web-env/
+venv/
+__pycache__/
+
+# Ignore Environment Variables (Security)
+.env
+
+# Ignore Compiled Python files
+*.pyc
