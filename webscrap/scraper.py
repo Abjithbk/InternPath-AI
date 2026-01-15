@@ -1,4 +1,3 @@
-# backend/scraper.py
 import asyncio
 from playwright.async_api import async_playwright
 from sqlalchemy.orm import Session
@@ -8,19 +7,36 @@ async def scrape_internships(db: Session, keyword: str):
     print(f"🚀 [Scraper] Starting job search for: {keyword}")
     
     async with async_playwright() as p:
-        # headless=True is CRITICAL for Render servers
-        browser = await p.chromium.launch(headless=True)
+        # --- CRITICAL RENDER CONFIGURATION ---
+        # These arguments are required to run Chrome in a container (Render)
+        browser_args = [
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-gpu"
+        ]
+        
+        print("🚀 [Scraper] Launching browser...")
+        try:
+            # Launch the browser with the special arguments
+            browser = await p.chromium.launch(headless=True, args=browser_args)
+            print("✅ [Scraper] Browser launched successfully!")
+        except Exception as e:
+            print(f"❌ [Scraper] CRITICAL ERROR: Could not launch browser. Details: {e}")
+            raise e
+
         context = await browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
         )
         page = await context.new_page()
 
-        # We use 'We Work Remotely' as a reliable test target
+        # Target URL
         url = f"https://weworkremotely.com/remote-jobs/search?term={keyword}"
         
         try:
+            print(f"🌍 [Scraper] Navigating to: {url}")
             await page.goto(url)
-            # Wait for the job list to appear
+            # Wait up to 15 seconds for the job list
             await page.wait_for_selector("section.jobs", timeout=15000)
         except Exception as e:
             print(f"❌ [Scraper] Failed to load page: {e}")
@@ -29,6 +45,8 @@ async def scrape_internships(db: Session, keyword: str):
 
         # Scrape the items
         job_items = await page.query_selector_all("section.jobs li")
+        print(f"🔍 [Scraper] Found {len(job_items)} potential jobs. Parsing...")
+        
         jobs_added = 0
 
         for item in job_items:
@@ -36,7 +54,7 @@ async def scrape_internships(db: Session, keyword: str):
                 # Selectors for WeWorkRemotely
                 title_el = await item.query_selector("span.title")
                 company_el = await item.query_selector("span.company")
-                link_el = await item.query_selector("a") # Link is usually on the parent or first anchor
+                link_el = await item.query_selector("a")
 
                 if title_el and company_el:
                     title = await title_el.inner_text()
