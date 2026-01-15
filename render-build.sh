@@ -2,9 +2,10 @@
 # Exit on error
 set -o errexit
 
-# Install Python dependencies
+# 1. Install Python Dependencies
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# Install ONLY the browser binary (No root needed)
+# 2. Install the Browser (Crucial Step!)
+# This downloads Chromium so Playwright can use it.
 playwright install chromium
