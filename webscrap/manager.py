@@ -15,7 +15,7 @@ def delete_expired_jobs(db: Session):
     print(f"🧹 [Manager] Deleted {deleted} expired internships.")
 
 async def maintain_pool(db: Session, keyword: str):
-    """Ensures we have 20 jobs per site for this keyword"""
+    """Refills inventory to 20 jobs per site"""
     sources = ["Internshala", "Unstop", "Prosple"]
     for source in sources:
         current = db.query(models.Internship).filter(
@@ -32,11 +32,10 @@ async def maintain_pool(db: Session, keyword: str):
             elif source == "Prosple": await scraper.scrape_prosple(keyword, db, limit=needed)
 
 async def maintain_all_pools(db: Session):
-    """Auto-Discovers all user keywords and refreshes them"""
+    """Checks ALL profiles"""
     active_keywords = [r[0] for r in db.query(models.Internship.keyword).distinct() if r[0]]
     print(f"🚀 [Auto-Pilot] Maintaining {len(active_keywords)} profiles: {active_keywords}")
     
     delete_expired_jobs(db)
-    
     for kw in active_keywords:
         await maintain_pool(db, kw)

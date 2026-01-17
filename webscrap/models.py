@@ -10,7 +10,7 @@ class Internship(Base):
     company = Column(String, index=True)
     link = Column(String, unique=True, index=True)
     source = Column(String, index=True)
-    keyword = Column(String, index=True) # e.g., "software", "marketing"
+    keyword = Column(String, index=True) # e.g. "software"
     
     # Details
     location = Column(String, nullable=True)
@@ -18,7 +18,7 @@ class Internship(Base):
     stipend = Column(String, nullable=True)
     skills = Column(String, nullable=True)
     
-    # Auto-Deletion Logic
+    # Auto-Deletion
     apply_by = Column(Date, nullable=True) 
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())

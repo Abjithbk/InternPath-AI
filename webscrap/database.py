@@ -8,7 +8,7 @@ SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
 if not SQLALCHEMY_DATABASE_URL:
     raise ValueError("❌ 'DATABASE_URL' env variable missing!")
 
-# Render provides 'postgres://', SQLAlchemy needs 'postgresql://'
+# Fix Render's postgres:// protocol for SQLAlchemy
 if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
