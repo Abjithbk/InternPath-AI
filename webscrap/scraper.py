@@ -10,18 +10,18 @@ BROWSER_ARGS = [
     "--no-sandbox",
     "--disable-setuid-sandbox",
     "--disable-dev-shm-usage",
-    "--disable-blink-features=AutomationControlled", 
+    "--disable-blink-features=AutomationControlled",
     "--disable-infobars",
     "--window-position=0,0",
     "--ignore-certificate-errors",
 ]
 
+# desktop user agents (More stable for scraping)
 USER_AGENTS = [
-    "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36",
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15"
 ]
 
-# --- HELPERS ---
 def is_relevant(title, keyword):
     title_lower = title.lower()
     keyword_lower = keyword.lower()
@@ -51,39 +51,43 @@ def save_job(db: Session, data: dict, keyword: str):
         if not apply_by: apply_by = get_fallback_date()
 
         new_job = models.Internship(
-            title=data['title'][:200], company=data['company'][:100], link=data['link'], 
-            source=data['source'], keyword=keyword, 
-            location=data.get('location', 'Remote')[:100], 
-            duration=data.get('duration', 'N/A')[:50], stipend=data.get('stipend', 'N/A')[:100], 
+            title=data['title'][:200], company=data['company'][:100], link=data['link'],
+            source=data['source'], keyword=keyword,
+            location=data.get('location', 'Remote')[:100],
+            duration=data.get('duration', 'N/A')[:50], stipend=data.get('stipend', 'N/A')[:100],
             skills=data.get('skills', 'N/A')[:200], apply_by=apply_by
         )
         db.add(new_job)
         db.commit()
         return True
-    except:
+    except Exception as e:
+        print(f"❌ [DB Error] Could not save job: {e}")
         db.rollback()
         return False
 
 async def create_stealth_page(context):
     page = await context.new_page()
-    await page.route("**/*", lambda r: r.abort() if r.request.resource_type in ["image", "media", "font"] else r.continue_())
+    # Removed strict resource blocking to prevent accidental breakage of layout scripts
     return page
 
-# --- SCRAPERS ---
 async def scrape_internshala(keyword: str, db: Session, limit: int = 20):
     print(f"   👉 [Internshala] Searching '{keyword}'...")
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True, args=BROWSER_ARGS)
-        context = await browser.new_context(user_agent=random.choice(USER_AGENTS), viewport={'width': 390, 'height': 844})
+        # Use Desktop Viewport (1280x720) to ensure selectors match
+        context = await browser.new_context(user_agent=random.choice(USER_AGENTS), viewport={'width': 1280, 'height': 720})
         page = await create_stealth_page(context)
         try:
             url = f"https://internshala.com/internships/keywords-{keyword.replace(' ', '-')}"
             await page.goto(url, timeout=45000)
             await page.wait_for_selector(".individual_internship", timeout=15000)
-        except:
+        except Exception as e:
+            print(f"   ❌ [Internshala] Load Failed: {e}")
             await browser.close(); return 0
 
         cards = await page.query_selector_all(".individual_internship")
+        print(f"   👀 [Internshala] Found {len(cards)} cards. Parsing...")
+        
         count = 0
         for card in cards:
             if count >= limit: break
@@ -102,7 +106,11 @@ async def scrape_internshala(keyword: str, db: Session, limit: int = 20):
                 
                 job_data = {"title": title.strip(), "company": company.strip(), "link": link, "source": "Internshala", "location": "Remote/Hybrid", "duration": duration, "stipend": stipend, "skills": "See Details", "apply_by": None}
                 if save_job(db, job_data, keyword): count += 1
-            except: continue
+            except Exception as e:
+                 print(f"   ⚠️ [Internshala] Parse Error: {e}")
+                 continue
+        
+        print(f"   ✅ [Internshala] Saved {count} jobs.")
         await browser.close()
         return count
 
@@ -110,12 +118,13 @@ async def scrape_unstop(keyword: str, db: Session, limit: int = 20):
     print(f"   👉 [Unstop] Searching '{keyword}'...")
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True, args=BROWSER_ARGS)
-        context = await browser.new_context(user_agent=random.choice(USER_AGENTS), viewport={'width': 390, 'height': 844})
+        context = await browser.new_context(user_agent=random.choice(USER_AGENTS), viewport={'width': 1280, 'height': 720})
         page = await create_stealth_page(context)
         try:
             await page.goto(f"https://unstop.com/internships?searchTerm={keyword}", timeout=60000)
             await page.wait_for_selector("a[href*='/internships/']", timeout=20000)
-        except:
+        except Exception as e:
+            print(f"   ❌ [Unstop] Load Failed: {e}")
             await browser.close(); return 0
 
         links = await page.query_selector_all("a[href*='/internships/']")
@@ -139,14 +148,15 @@ async def scrape_prosple(keyword: str, db: Session, limit: int = 20):
     print(f"   👉 [Prosple] Searching '{keyword}'...")
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True, args=BROWSER_ARGS)
-        context = await browser.new_context(user_agent=random.choice(USER_AGENTS), viewport={'width': 390, 'height': 844})
+        context = await browser.new_context(user_agent=random.choice(USER_AGENTS), viewport={'width': 1280, 'height': 720})
         page = await create_stealth_page(context)
         try:
             await page.goto(f"https://in.prosple.com/search-jobs?keywords={keyword}&locations=India", timeout=60000)
             if "Security" in await page.title(): await browser.close(); return 0
             await page.wait_for_selector("div.SearchJobCard", timeout=20000)
-        except:
-            await browser.close(); return 0
+        except Exception as e:
+             print(f"   ❌ [Prosple] Load Failed: {e}")
+             await browser.close(); return 0
 
         cards = await page.query_selector_all("div.SearchJobCard")
         count = 0
