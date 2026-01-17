@@ -1,26 +1,34 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from playwright.async_api import async_playwright
 from . import models
 
 # --- CONFIGURATION ---
 BROWSER_ARGS = ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
 
-# --- HELPER: DATE PARSER ---
+# --- HELPER: DATE PARSER (With 14-Day Fallback) ---
 def parse_date(date_str):
-    """Converts '15 Jan 25' to SQL Date object."""
-    if not date_str: return None
-    text = date_str.lower().strip()
-    if "immediate" in text or "start" in text: return None
+    """
+    1. Tries to parse the date string.
+    2. If fails or missing, returns Date(Today + 14 Days).
+    """
+    fallback_date = date.today() + timedelta(days=14)
     
-    formats = ["%d %b'%y", "%d %b %y", "%d-%m-%Y", "%Y-%m-%d"]
+    if not date_str: return fallback_date
+    text = date_str.lower().strip()
+    
+    # "Immediate" or "Start ASAP" -> Set default expiration
+    if "immediate" in text or "start" in text: return fallback_date
+    
+    formats = ["%d %b'%y", "%d %b %y", "%d-%m-%Y", "%Y-%m-%d", "%d %b %Y"]
     clean_text = text.replace("'", "").replace(",", "")
     
     for fmt in formats:
         try:
             return datetime.strptime(clean_text, fmt).date()
         except: continue
-    return None
+        
+    return fallback_date # Return fallback if parsing fails
 
 # --- HELPER: SAVE TO DB ---
 def save_job(db, data, keyword):
@@ -32,11 +40,16 @@ def save_job(db, data, keyword):
 
     try:
         new_job = models.Internship(
-            title=data['title'], company=data['company'], link=data['link'], 
-            source=data['source'], keyword=keyword,
-            location=data['location'], duration=data['duration'], 
-            stipend=data['stipend'], skills=data['skills'],
-            apply_by=parse_date(data['apply_by'])
+            title=data['title'], 
+            company=data['company'], 
+            link=data['link'], 
+            source=data['source'], 
+            keyword=keyword,
+            location=data['location'], 
+            duration=data['duration'], 
+            stipend=data['stipend'], 
+            skills=data['skills'],
+            apply_by=parse_date(data['apply_by']) # Never returns None
         )
         db.add(new_job)
         db.commit()
@@ -49,7 +62,6 @@ def save_job(db, data, keyword):
 async def scrape_internshala(keyword, db, limit=20):
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True, args=BROWSER_ARGS)
-        # Pixel 5 for Mobile View (Often simpler HTML)
         context = await browser.new_context(**p.devices['Pixel 5']) 
         page = await context.new_page()
 
@@ -72,7 +84,6 @@ async def scrape_internshala(keyword, db, limit=20):
                 link = f"https://internshala.com{await (await card.query_selector('.view_detail_button')).get_attribute('href')}"
                 company = await (await card.query_selector(".company_name")).inner_text()
                 
-                # Extract Details from rows
                 items = await card.query_selector_all(".item_body")
                 duration = await items[1].inner_text() if len(items) > 1 else "N/A"
                 stipend = await items[2].inner_text() if len(items) > 2 else "Unpaid"
@@ -81,7 +92,7 @@ async def scrape_internshala(keyword, db, limit=20):
                     "title": title.strip(), "company": company.strip(), "link": link,
                     "source": "Internshala", "location": "Remote/Hybrid", 
                     "duration": duration, "stipend": stipend, 
-                    "skills": "See Details", "apply_by": "15 Jan 25" # Placeholder as this varies
+                    "skills": "See Details", "apply_by": "15 Jan 25" # Placeholder
                 }
                 if save_job(db, job_data, keyword): count += 1
             except: continue
@@ -114,7 +125,6 @@ async def scrape_unstop(keyword, db, limit=20):
                 href = await link.get_attribute("href")
                 full_link = href if href.startswith("http") else f"https://unstop.com{href}"
                 
-                # Unstop details are often hidden in list view, basic extraction:
                 job_data = {
                     "title": title.strip(), "company": "Unstop Partner", "link": full_link,
                     "source": "Unstop", "location": "India", 

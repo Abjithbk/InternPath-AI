@@ -2,10 +2,9 @@ from sqlalchemy.orm import Session
 from datetime import date
 from . import models, scraper
 
-# --- CONFIGURATION ---
-TARGET_PER_SITE = 20  # Keeps 60 jobs total (20 Internshala + 20 Unstop + 20 Prosple)
+TARGET_PER_SITE = 20 
 
-# --- 1. CLEANUP EXPIRED JOBS ---
+# --- 1. CLEANUP ---
 def delete_expired_jobs(db: Session):
     today = date.today()
     deleted = db.query(models.Internship).filter(
@@ -15,40 +14,42 @@ def delete_expired_jobs(db: Session):
     db.commit()
     print(f"🧹 [Manager] Deleted {deleted} expired internships.")
 
-# --- 2. CHECK & REFILL INVENTORY ---
+# --- 2. SINGLE POOL MAINTENANCE ---
 async def maintain_pool(db: Session, keyword: str):
-    print(f"🛡️ [Manager] Running inventory check for: '{keyword}'...")
+    print(f"🛡️ [Manager] Checking '{keyword}'...")
     
-    # A. Delete Expired First
-    delete_expired_jobs(db)
-
     sources = ["Internshala", "Unstop", "Prosple"]
-    report = {}
-
     for source in sources:
-        # B. Count Current Inventory
-        current_count = db.query(models.Internship).filter(
+        current = db.query(models.Internship).filter(
             models.Internship.source == source,
             models.Internship.keyword == keyword
         ).count()
 
-        # C. Calculate Deficit
-        needed = TARGET_PER_SITE - current_count
+        needed = TARGET_PER_SITE - current
 
         if needed > 0:
-            print(f"   ⚠️ [{source}] Low Inventory: Have {current_count}, Need {needed}. Refilling...")
-            
-            # D. Call Scraper with EXACT Limit
+            print(f"   ⚠️ [{keyword}] {source}: Need {needed}. Refilling...")
             if source == "Internshala":
-                added = await scraper.scrape_internshala(keyword, db, limit=needed)
+                await scraper.scrape_internshala(keyword, db, limit=needed)
             elif source == "Unstop":
-                added = await scraper.scrape_unstop(keyword, db, limit=needed)
+                await scraper.scrape_unstop(keyword, db, limit=needed)
             elif source == "Prosple":
-                added = await scraper.scrape_prosple(keyword, db, limit=needed)
-            
-            report[source] = f"Added {added} new jobs"
-        else:
-            print(f"   ✅ [{source}] Inventory Full ({current_count}/{TARGET_PER_SITE}).")
-            report[source] = "Full"
+                await scraper.scrape_prosple(keyword, db, limit=needed)
 
-    return {"status": "Maintenance Complete", "report": report}
+# --- 3. AUTO-DISCOVERY (The New Logic) ---
+async def maintain_all_pools(db: Session):
+    # Get list of ALL unique keywords users have ever searched
+    # e.g., ["java", "python", "graphic design", "civil engineering"]
+    active_keywords = [
+        r[0] for r in db.query(models.Internship.keyword).distinct() 
+        if r[0] # Filter out None/Empty
+    ]
+    
+    print(f"🚀 [Auto-Pilot] Maintaining {len(active_keywords)} profiles: {active_keywords}")
+    
+    # First, clean global trash
+    delete_expired_jobs(db)
+    
+    # Then refill each bucket
+    for kw in active_keywords:
+        await maintain_pool(db, kw)
