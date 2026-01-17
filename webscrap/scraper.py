@@ -7,8 +7,6 @@ async def scrape_internships(db: Session, keyword: str):
     print(f"🚀 [Scraper] Starting job search for: {keyword}")
     
     async with async_playwright() as p:
-        # --- CRITICAL RENDER CONFIGURATION ---
-        # These arguments are required to run Chrome in a container (Render)
         browser_args = [
             "--no-sandbox",
             "--disable-setuid-sandbox",
@@ -18,7 +16,6 @@ async def scrape_internships(db: Session, keyword: str):
         
         print("🚀 [Scraper] Launching browser...")
         try:
-            # Launch the browser with the special arguments
             browser = await p.chromium.launch(headless=True, args=browser_args)
             print("✅ [Scraper] Browser launched successfully!")
         except Exception as e:
@@ -26,7 +23,7 @@ async def scrape_internships(db: Session, keyword: str):
             raise e
 
         context = await browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         )
         page = await context.new_page()
 
@@ -35,11 +32,25 @@ async def scrape_internships(db: Session, keyword: str):
         
         try:
             print(f"🌍 [Scraper] Navigating to: {url}")
-            await page.goto(url)
-            # Wait up to 15 seconds for the job list
-            await page.wait_for_selector("section.jobs", timeout=15000)
+            await page.goto(url, timeout=60000) # Increased timeout to 60s
+            
+            # --- DEBUGGING: Print the Page Title ---
+            page_title = await page.title()
+            print(f"📄 [Scraper] Page Title is: '{page_title}'")
+            
+            if "Just a moment" in page_title or "Cloudflare" in page_title:
+                print("⚠️ [Scraper] BLOCKED by Cloudflare protection.")
+                await browser.close()
+                return {"status": "blocked", "error": "Cloudflare detected"}
+
+            # Wait for the job list (Increased to 30s)
+            await page.wait_for_selector("section.jobs", timeout=30000)
+            
         except Exception as e:
             print(f"❌ [Scraper] Failed to load page: {e}")
+            # Optional: Print page source snippet to debug
+            content = await page.content()
+            print(f"📄 [Scraper] Page content snippet: {content[:500]}")
             await browser.close()
             return {"status": "failed", "error": str(e)}
 
@@ -48,10 +59,8 @@ async def scrape_internships(db: Session, keyword: str):
         print(f"🔍 [Scraper] Found {len(job_items)} potential jobs. Parsing...")
         
         jobs_added = 0
-
         for item in job_items:
             try:
-                # Selectors for WeWorkRemotely
                 title_el = await item.query_selector("span.title")
                 company_el = await item.query_selector("span.company")
                 link_el = await item.query_selector("a")
@@ -59,16 +68,9 @@ async def scrape_internships(db: Session, keyword: str):
                 if title_el and company_el:
                     title = await title_el.inner_text()
                     company = await company_el.inner_text()
-                    
-                    # Extract Link
                     relative_link = await link_el.get_attribute("href") if link_el else ""
-                    if relative_link.startswith("/"):
-                        full_link = f"https://weworkremotely.com{relative_link}"
-                    else:
-                        full_link = relative_link
+                    full_link = f"https://weworkremotely.com{relative_link}" if relative_link.startswith("/") else relative_link
 
-                    # --- DATABASE DEDUPLICATION ---
-                    # Check if we already have this specific link
                     existing_job = db.query(models.Internship).filter(models.Internship.link == full_link).first()
                     
                     if not existing_job:
@@ -80,11 +82,9 @@ async def scrape_internships(db: Session, keyword: str):
                         )
                         db.add(new_internship)
                         jobs_added += 1
-            except Exception as e:
-                # Ignore empty rows (headers/ads)
+            except Exception:
                 continue
 
-        # Save all new jobs
         db.commit()
         await browser.close()
         
