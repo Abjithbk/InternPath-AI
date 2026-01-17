@@ -1,28 +1,48 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from . import models
-from .database import engine, get_db
-from .scraper import scrape_internships
+from . import models, database, scraper
+import random
 
-# 1. Create the database tables automatically
-models.Base.metadata.create_all(bind=engine)
+# Initialize DB
+models.Base.metadata.create_all(bind=database.engine)
 
-# 2. Initialize the FastAPI app (This was missing!)
 app = FastAPI()
 
-# 3. Define the Scraper Endpoint
-@app.post("/scrape-jobs")
-async def trigger_scraper(keyword: str = "software intern", db: Session = Depends(get_db)):
-    """
-    Triggers the background scraper to find jobs and save them to the DB.
-    """
+# Dependency
+def get_db():
+    db = database.SessionLocal()
     try:
-        result = await scrape_internships(db, keyword)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        yield db
+    finally:
+        db.close()
 
-# 4. Root endpoint (Optional, for health check)
 @app.get("/")
 def read_root():
-    return {"status": "Internship Scraper is running"}
+    return {"status": "InternPath AI Scraper is Live 🚀"}
+
+@app.post("/scrape-jobs")
+async def trigger_scrape(keyword: str, db: Session = Depends(get_db)):
+    return await scraper.scrape_internships(db, keyword)
+
+@app.get("/jobs")
+def get_jobs(db: Session = Depends(get_db)):
+    return db.query(models.Internship).order_by(models.Internship.id.desc()).limit(100).all()
+
+# --- DB CONNECTION TEST TOOL ---
+@app.get("/test-db-connection")
+def test_db_connection(db: Session = Depends(get_db)):
+    try:
+        # Create a Fake Job to test writing
+        test_job = models.Internship(
+            title="TEST CONNECTION JOB",
+            company="Supabase Check",
+            link=f"https://test.com/{random.randint(1000,9999)}",
+            source="System Test"
+        )
+        db.add(test_job)
+        db.commit()
+        db.refresh(test_job)
+        
+        return {"status": "SUCCESS", "message": "Successfully wrote to Supabase!", "job_id": test_job.id}
+    except Exception as e:
+        return {"status": "FAILURE", "error": str(e), "hint": "Check DATABASE_URL in Render."}
