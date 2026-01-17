@@ -67,7 +67,6 @@ def save_job(db: Session, data: dict, keyword: str):
 
 async def create_stealth_page(context):
     page = await context.new_page()
-    # Block heavy media to save RAM/Bandwidth
     await page.route("**/*", lambda r: r.abort() if r.request.resource_type in ["image", "media", "font", "stylesheet"] else r.continue_())
     return page
 
@@ -82,14 +81,14 @@ async def scrape_internshala(keyword: str, db: Session, limit: int = 20):
 
         try:
             url = f"https://internshala.com/internships/keywords-{keyword.replace(' ', '-')}"
+            # Internshala is fast, 'load' is fine
             await page.goto(url, timeout=45000)
-            await page.wait_for_selector(".individual_internship", timeout=20000)
+            await page.wait_for_selector(".individual_internship", timeout=15000)
         except Exception as e:
             print(f"   ❌ [Internshala] Load Failed: {e}")
             await browser.close(); return 0
 
         cards = await page.query_selector_all(".individual_internship")
-        
         count = 0
         for card in cards:
             if count >= limit: break
@@ -129,20 +128,17 @@ async def scrape_unstop(keyword: str, db: Session, limit: int = 20):
         context = await browser.new_context(user_agent=random.choice(USER_AGENTS), viewport={'width': 1280, 'height': 720})
         page = await create_stealth_page(context)
         try:
-            await page.goto(f"https://unstop.com/internships?searchTerm={keyword}", timeout=60000)
-            
-            # FIX: Explicit wait for dynamic content to load
-            await page.wait_for_timeout(5000) 
-            
-            # Try to wait for cards, but don't crash if they don't appear immediately
-            try: await page.wait_for_selector("a[href*='/internships/']", timeout=10000)
-            except: pass 
-            
-        except Exception as e:
-            print(f"   ❌ [Unstop] Load Failed: {e}")
+            # Wait for DOMContentLoaded (Faster)
+            await page.goto(f"https://unstop.com/internships?searchTerm={keyword}", timeout=45000, wait_until="domcontentloaded")
+            await page.wait_for_timeout(4000) # Give JS time to render cards
+        except:
             await browser.close(); return 0
 
+        # Try multiple selectors for cards
         links = await page.query_selector_all("a[href*='/internships/']")
+        if not links:
+            links = await page.query_selector_all("div.opportunity-card a") # Fallback selector
+            
         count = 0
         for link in links:
             if count >= limit: break
@@ -151,8 +147,11 @@ async def scrape_unstop(keyword: str, db: Session, limit: int = 20):
                 if not title_el: continue
                 title = await title_el.inner_text()
                 if not is_relevant(title, keyword): continue
+                
                 href = await link.get_attribute("href")
+                if not href: continue
                 full_link = href if href.startswith("http") else f"https://unstop.com{href}"
+                
                 job_data = {"title": title.strip(), "company": "Unstop Partner", "link": full_link, "source": "Unstop", "location": "India", "duration": "N/A", "stipend": "See Link", "skills": "See Link", "apply_by": None}
                 if save_job(db, job_data, keyword): count += 1
             except: continue
@@ -169,20 +168,16 @@ async def scrape_prosple(keyword: str, db: Session, limit: int = 20):
         context = await browser.new_context(user_agent=random.choice(USER_AGENTS), viewport={'width': 1280, 'height': 720})
         page = await create_stealth_page(context)
         try:
-            await page.goto(f"https://in.prosple.com/search-jobs?keywords={keyword}&locations=India", timeout=60000)
+            # FIX: Use 'domcontentloaded' to avoid Timeouts on slow networks
+            await page.goto(f"https://in.prosple.com/search-jobs?keywords={keyword}&locations=India", timeout=45000, wait_until="domcontentloaded")
+            
             if "Security" in await page.title(): 
-                print("   ⚠️ [Prosple] Security Block.")
                 await browser.close(); return 0
             
-            # FIX: Explicit wait for dynamic content
-            await page.wait_for_timeout(5000)
-            
-            try: await page.wait_for_selector("div.SearchJobCard", timeout=10000)
-            except: pass
-
-        except Exception as e:
-             print(f"   ❌ [Prosple] Load Failed: {e}")
-             await browser.close(); return 0
+            await page.wait_for_timeout(3000) # Short nap for hydration
+            await page.wait_for_selector("div.SearchJobCard", timeout=10000)
+        except:
+            await browser.close(); return 0
 
         cards = await page.query_selector_all("div.SearchJobCard")
         count = 0
