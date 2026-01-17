@@ -16,7 +16,7 @@ BROWSER_ARGS = [
     "--ignore-certificate-errors",
 ]
 
-# desktop user agents (More stable for scraping)
+# Desktop User Agents (More stable for scraping than mobile)
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15"
@@ -67,16 +67,18 @@ def save_job(db: Session, data: dict, keyword: str):
 
 async def create_stealth_page(context):
     page = await context.new_page()
-    # Removed strict resource blocking to prevent accidental breakage of layout scripts
     return page
+
+# --- SCRAPERS ---
 
 async def scrape_internshala(keyword: str, db: Session, limit: int = 20):
     print(f"   👉 [Internshala] Searching '{keyword}'...")
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True, args=BROWSER_ARGS)
-        # Use Desktop Viewport (1280x720) to ensure selectors match
+        # Use Desktop Viewport
         context = await browser.new_context(user_agent=random.choice(USER_AGENTS), viewport={'width': 1280, 'height': 720})
         page = await create_stealth_page(context)
+
         try:
             url = f"https://internshala.com/internships/keywords-{keyword.replace(' ', '-')}"
             await page.goto(url, timeout=45000)
@@ -92,19 +94,48 @@ async def scrape_internshala(keyword: str, db: Session, limit: int = 20):
         for card in cards:
             if count >= limit: break
             try:
-                if not await card.get_attribute("internshipid"): continue
-                title_el = await card.query_selector("h3")
+                # 1. Get Title
+                title_el = await card.query_selector("h3.job-internship-name") or await card.query_selector("h3")
                 if not title_el: continue
                 title = await title_el.inner_text()
+                
                 if not is_relevant(title, keyword): continue
 
-                link = f"https://internshala.com{await (await card.query_selector('.view_detail_button')).get_attribute('href')}"
-                company = await (await card.query_selector(".company_name")).inner_text()
+                # 2. Get Link (Fixed Logic)
+                # First try data-href attribute on the card itself
+                href = await card.get_attribute("data-href")
+                if not href:
+                    # Fallback: Try finding any 'a' tag or button inside
+                    link_el = await card.query_selector(".view_detail_button") or await card.query_selector("a")
+                    if link_el: href = await link_el.get_attribute("href")
+                
+                if not href:
+                    print("   ⚠️ Skipping: No Link Found")
+                    continue
+                
+                link = f"https://internshala.com{href}"
+
+                # 3. Get Company
+                company_el = await card.query_selector(".company_name") or await card.query_selector("p.company-name")
+                company = await company_el.inner_text() if company_el else "Unknown"
+
+                # 4. Get Details
                 items = await card.query_selector_all(".item_body")
                 duration = await items[1].inner_text() if len(items) > 1 else "N/A"
                 stipend = await items[2].inner_text() if len(items) > 2 else "Unpaid"
                 
-                job_data = {"title": title.strip(), "company": company.strip(), "link": link, "source": "Internshala", "location": "Remote/Hybrid", "duration": duration, "stipend": stipend, "skills": "See Details", "apply_by": None}
+                job_data = {
+                    "title": title.strip(), 
+                    "company": company.strip(), 
+                    "link": link, 
+                    "source": "Internshala", 
+                    "location": "Remote/Hybrid", 
+                    "duration": duration, 
+                    "stipend": stipend, 
+                    "skills": "See Details", 
+                    "apply_by": None
+                }
+                
                 if save_job(db, job_data, keyword): count += 1
             except Exception as e:
                  print(f"   ⚠️ [Internshala] Parse Error: {e}")
