@@ -1,14 +1,12 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, BackgroundTasks
 from sqlalchemy.orm import Session
-from . import models, database, scraper
-import random
+from . import models, database, manager
 
-# Initialize DB
+# Initialize DB Tables
 models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI()
 
-# Dependency
 def get_db():
     db = database.SessionLocal()
     try:
@@ -18,31 +16,22 @@ def get_db():
 
 @app.get("/")
 def read_root():
-    return {"status": "InternPath AI Scraper is Live 🚀"}
+    return {"status": "InternPath Manager Active 🚀"}
 
-@app.post("/scrape-jobs")
-async def trigger_scrape(keyword: str, db: Session = Depends(get_db)):
-    return await scraper.scrape_internships(db, keyword)
+@app.post("/refresh-pool")
+async def refresh_internship_pool(keyword: str, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    """
+    AUTO-MAINTENANCE TRIGGER:
+    1. Deletes expired jobs.
+    2. Counts current jobs.
+    3. Scrapes only what is needed to reach 20 per site.
+    """
+    background_tasks.add_task(manager.maintain_pool, db, keyword)
+    return {"status": "Maintenance Started", "message": f"Manager is optimizing pool for '{keyword}'"}
 
 @app.get("/jobs")
-def get_jobs(db: Session = Depends(get_db)):
-    return db.query(models.Internship).order_by(models.Internship.id.desc()).limit(100).all()
-
-# --- DB CONNECTION TEST TOOL ---
-@app.get("/test-db-connection")
-def test_db_connection(db: Session = Depends(get_db)):
-    try:
-        # Create a Fake Job to test writing
-        test_job = models.Internship(
-            title="TEST CONNECTION JOB",
-            company="Supabase Check",
-            link=f"https://test.com/{random.randint(1000,9999)}",
-            source="System Test"
-        )
-        db.add(test_job)
-        db.commit()
-        db.refresh(test_job)
-        
-        return {"status": "SUCCESS", "message": "Successfully wrote to Supabase!", "job_id": test_job.id}
-    except Exception as e:
-        return {"status": "FAILURE", "error": str(e), "hint": "Check DATABASE_URL in Render."}
+def get_jobs(keyword: str = None, db: Session = Depends(get_db)):
+    query = db.query(models.Internship)
+    if keyword:
+        query = query.filter(models.Internship.keyword == keyword)
+    return query.order_by(models.Internship.id.desc()).all()
