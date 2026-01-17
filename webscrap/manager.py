@@ -27,9 +27,12 @@ async def maintain_pool(db: Session, keyword: str):
 
         if needed > 0:
             print(f"   ⚠️ [{keyword}] {source}: Need {needed}. Refilling...")
-            if source == "Internshala": await scraper.scrape_internshala(keyword, db, limit=needed)
-            elif source == "Unstop": await scraper.scrape_unstop(keyword, db, limit=needed)
-            elif source == "Prosple": await scraper.scrape_prosple(keyword, db, limit=needed)
+            if source == "Internshala": 
+                await scraper.scrape_internshala(keyword, db, limit=needed)
+            elif source == "Unstop": 
+                await scraper.scrape_unstop(keyword, db, limit=needed)
+            elif source == "Prosple": 
+                await scraper.scrape_prosple(keyword, db, limit=needed)
 
 async def maintain_all_pools(db: Session):
     """Checks ALL profiles"""
