@@ -1,4 +1,6 @@
 from fastapi import FastAPI, Depends, BackgroundTasks
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles 
 from sqlalchemy.orm import Session
 from . import models, database, manager, scraper
 
@@ -17,15 +19,19 @@ def get_db():
 async def background_fill_sequence(keyword: str):
     """
     Runs scrapers one-by-one with a FRESH session.
-    This prevents RAM crashes and 'Session Closed' errors.
+    ORDER: Prosple (2nd) -> Unstop (3rd)
     """
-    print(f"🕵️ [Background] Filling '{keyword}'...")
+    print(f"🕵️ [Background] Starting Sequence for '{keyword}'...")
     db = database.SessionLocal()
     try:
-        # Run Unstop
-        await scraper.scrape_unstop(keyword, db, limit=10)
-        # Run Prosple (only after Unstop finishes)
+        # Priority 2: Run Prosple
+        # We run this first in background because it's usually faster than Unstop
         await scraper.scrape_prosple(keyword, db, limit=10)
+        
+        # Priority 3: Run Unstop
+        # Runs last because it's the heaviest SPA
+        await scraper.scrape_unstop(keyword, db, limit=10)
+        
     except Exception as e:
         print(f"❌ Bg Error: {e}")
     finally:
@@ -42,13 +48,13 @@ async def run_maintenance_safe():
 # --- ENDPOINTS ---
 @app.get("/")
 def read_root():
-    return {"status": "InternPath AI Active 🧠"}
+    return FileResponse("index.html")
 
 @app.get("/jobs")
 async def get_jobs(keyword: str, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     clean_keyword = keyword.lower().strip()
     
-    # 1. Check Cache
+    # 1. Check Cache (Instant)
     existing = db.query(models.Internship).filter(models.Internship.keyword == clean_keyword).order_by(models.Internship.id.desc()).all()
     
     if len(existing) >= 5:
@@ -57,13 +63,14 @@ async def get_jobs(keyword: str, background_tasks: BackgroundTasks, db: Session 
     # 2. Cold Start (If cache empty)
     print(f"❄️ [Cold Start] New topic '{clean_keyword}'. Scraping live...")
     
-    # Run Internshala immediately (User waits ~4s for this)
+    # Priority 1: Internshala (Foreground)
+    # The user waits ~4-5 seconds for this, so they get data immediately.
     await scraper.scrape_internshala(clean_keyword, db, limit=10)
     
-    # Trigger Safe Background Sequence for others
+    # Trigger Background Sequence (Prosple -> Unstop)
     background_tasks.add_task(background_fill_sequence, clean_keyword)
 
-    # Return the data we just scraped
+    # Return whatever we found from Internshala immediately
     return db.query(models.Internship).filter(models.Internship.keyword == clean_keyword).all()
 
 @app.post("/refresh-pool")
