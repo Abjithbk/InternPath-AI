@@ -32,5 +32,8 @@ class Internship(Base):
     skills = Column(String(200), nullable=True)
 
     apply_by = Column(Date, nullable=True)
+<<<<<<< HEAD
+=======
 >>>>>>> c4ba0b2 (Ameyaaa)
+>>>>>>> 60cdc0098c26736ebccc4cbd23c4830ca28c61d1
     created_at = Column(DateTime(timezone=True), server_default=func.now())

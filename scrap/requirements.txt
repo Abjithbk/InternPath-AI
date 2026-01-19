@@ -1,3 +1,0 @@
-patchright
-playwright
-requests
