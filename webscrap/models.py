@@ -1,3 +1,4 @@
+# backend/models.py
 from sqlalchemy import Column, Integer, String, Date, DateTime
 from sqlalchemy.sql import func
 from .database import Base
@@ -5,6 +6,7 @@ from .database import Base
 class Internship(Base):
     __tablename__ = "internships"
 
+<<<<<<< HEAD
     id = Column(Integer, primary_key=True)
     title = Column(String(200), nullable=False)
     company = Column(String(100), nullable=False)
@@ -16,4 +18,19 @@ class Internship(Base):
     stipend = Column(String(100))
     skills = Column(String(200))
     apply_by = Column(Date)
+=======
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(200), nullable=False, index=True)
+    company = Column(String(100), nullable=False, index=True)
+    link = Column(String, unique=True, nullable=False, index=True)
+    source = Column(String(50), nullable=False, index=True)
+    keyword = Column(String(100), nullable=False, index=True)
+
+    location = Column(String(100), nullable=True)
+    duration = Column(String(50), nullable=True)
+    stipend = Column(String(100), nullable=True)
+    skills = Column(String(200), nullable=True)
+
+    apply_by = Column(Date, nullable=True)
+>>>>>>> c4ba0b2 (Ameyaaa)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
