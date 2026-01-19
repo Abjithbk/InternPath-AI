@@ -8,7 +8,7 @@ const Dashboard = () => {
       <nav className="flex justify-end items-center px-6 py-4 bg-slate-100">
         <div className="space-x-4">
           <button onClick={() => {
-            navigate("/Login")
+            navigate("/Signup")
           }} className="px-5 py-2 rounded-full text-blue-600 font-medium hover:bg-blue-50 transition">
             Sign in
           </button>
@@ -71,7 +71,9 @@ const Dashboard = () => {
           </div>
 
           {/* CTA */}
-          <button className="mt-12 px-10 py-3 rounded-full bg-blue-600 text-white font-medium
+          <button onClick={() => {
+            navigate("/Internship")
+          }} className="mt-12 px-10 py-3 rounded-full bg-blue-600 text-white font-medium
                              hover:bg-blue-700 transition active:scale-95">
             Explore Now
           </button>

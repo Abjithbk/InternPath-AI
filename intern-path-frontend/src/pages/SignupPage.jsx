@@ -1,7 +1,7 @@
 import React from 'react'
 import { FcGoogle } from "react-icons/fc";
 import { useNavigate } from 'react-router-dom';
-const LoginPage = () => {
+const SignupPage = () => {
     const navigate = useNavigate();
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
@@ -66,7 +66,7 @@ const LoginPage = () => {
           {/* Submit Button */}
           <button
           onClick={() => {
-            navigate("/")
+            navigate("/");
           }}
             type="submit"
             className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition"
@@ -79,4 +79,4 @@ const LoginPage = () => {
   )
 }
 
-export default LoginPage
+export default SignupPage
