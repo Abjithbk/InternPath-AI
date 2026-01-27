@@ -1,7 +1,7 @@
 from google.oauth2 import id_token
 from google.auth.transport.requests import Request
 from fastapi import HTTPException
-from models import User
+from database.models import User
 from security import create_access_token
 import os
 
@@ -39,7 +39,13 @@ def handle_google_signup_or_login(token: str, db):
             db.refresh(user)
 
         #Jwt token gen
-        jwt_token = create_access_token(user.email)
+        jwt_token = create_access_token(
+            data = {
+                "sub": str(user.id),
+                "username":user.first_name,
+                "email":user.email
+            }
+        )
         return {"access_token": jwt_token}
 
     except ValueError:

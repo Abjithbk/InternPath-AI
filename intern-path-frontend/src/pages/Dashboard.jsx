@@ -1,21 +1,60 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
+import { jwtDecode } from "jwt-decode"
 const Dashboard = () => {
-    const navigate = useNavigate()
+    const navigate = useNavigate();
+
+    const [user,setUser] = useState(null);
+
+    useEffect(()=> {
+      const token = localStorage.getItem("access_token");
+      if(token) {
+        try {
+          const decoded = jwtDecode(token);
+          console.log(decoded);
+          
+          setUser(decoded);
+        }
+        catch(err) {
+          localStorage.removeItem("access_token");
+        }
+      }
+
+    },[])
   return (
     <div className="bg-white min-h-screen">
       {/* Navbar */}
       <nav className="flex justify-end items-center px-6 py-4 bg-slate-100">
-        <div className="space-x-4">
-          <button onClick={() => {
-            navigate("/Signup")
-          }} className="px-5 py-2 rounded-full text-blue-600 font-medium hover:bg-blue-50 transition">
-            Sign in
-          </button>
-          <button className="px-5 py-2 rounded-full bg-blue-600 text-white font-medium hover:bg-blue-700 transition">
-            Get started
-          </button>
-        </div>
+        {
+          user ? (
+             <div className="flex items-center gap-4">
+            <span className="text-slate-700 font-medium">
+              Welcome, {user.username}
+            </span>
+
+            <button
+              className="px-5 py-2 rounded-full bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
+            >
+              Get started
+            </button>
+          </div>
+          ) :(
+            <div className="space-x-4">
+              <button
+                onClick={() => navigate("/Signup")}
+                className="px-5 py-2 rounded-full text-blue-600 font-medium hover:bg-blue-50 transition"
+              >
+                Sign in
+              </button>
+
+              <button
+                className="px-5 py-2 rounded-full bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
+              >
+                Get started
+              </button>
+            </div>
+          )
+        }
       </nav>
 
       {/* Hero Section */}
