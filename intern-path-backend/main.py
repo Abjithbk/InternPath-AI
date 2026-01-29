@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # Local imports (Works when Root Directory = backend)
 from database.database import engine
 from database import models
-from routers import auth
+from routers import auth ,internship
 
 
 # Create Tables
@@ -29,3 +29,6 @@ def health_check():
     return {"status": "ok", "message": "Backend is running"}
 
 app.include_router(auth.router)
+app.include_router(internship.router)
+
+

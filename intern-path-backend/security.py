@@ -1,8 +1,8 @@
 import os
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-import bcrypt
-from jose import jwt, JWTError
+from passlib.context import CryptContext
+from jose import jwt, JWTError,ExpiredSignatureError
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -10,33 +10,22 @@ load_dotenv()
 # Configuration from Environment Variables
 SECRET_KEY = os.getenv("SECRET_KEY", "your-super-secret-key-change-this")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
+ACCESS_TOKEN_EXPIRE_MINUTES = 30  # 24 hours
 
 # --- Password Hashing (Using bcrypt directly) ---
 
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto"
+)
+
 def hash_password(password: str) -> str:
-    """
-    Hashes a password using bcrypt. 
-    Bcrypt has a 72-character limit, so we truncate just in case.
-    """
-    # Truncate and encode to bytes
-    pwd_bytes = password[:72].encode('utf-8')
-    # Generate salt and hash
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(pwd_bytes, salt)
-    return hashed.decode('utf-8')
+    return pwd_context.hash(password)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """
-    Verifies a plain password against the stored hash.
-    """
-    try:
-        return bcrypt.checkpw(
-            plain_password[:72].encode('utf-8'),
-            hashed_password.encode('utf-8')
-        )
-    except Exception:
-        return False
+    return pwd_context.verify(plain_password, hashed_password)
 
 # --- JWT Token Handling ---
 
@@ -61,5 +50,7 @@ def decode_access_token(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
+    except ExpiredSignatureError:
+        return "expired"
     except JWTError:
         return None
