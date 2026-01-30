@@ -163,13 +163,41 @@ async def scrape_internshala(keyword: str, db: Session, limit: int = 15):
                     raw_skills = await skills_el.inner_text()
                     skills = ", ".join([s.strip() for s in raw_skills.replace("\n", ",").split(',') if s.strip()])
                 
+                # --- DATA CLEANING ---
+                def clean_text(text, max_len=200):
+                    if not text:
+                        return None
+                    return re.sub(r'\s+', ' ', text).strip().lower()[:max_len]
+
+                def clean_skills(skills):
+                    if not skills:
+                        return "N/A"
+                    skills = re.sub(r'\+\d+\s*more', '', skills.lower())
+                    parts = skills.replace("\n", ",").split(",")
+                    cleaned = sorted(set(s.strip() for s in parts if len(s.strip()) > 1))
+                    return ", ".join(cleaned) if cleaned else "N/A"
+
+                def clean_stipend(text):
+                    nums = re.findall(r'\d+', text.replace(',', ''))
+                    if len(nums) >= 2:
+                        return f"{nums[0]}-{nums[1]}"
+                    elif len(nums) == 1:
+                        return nums[0]
+                    return "unpaid"
+                
                 job_data = {
-                    "title": title.strip(), "company": company.strip(), "link": link,
-                    "source": "Internshala", "location": "Remote",
-                    "duration": duration, "stipend": stipend, 
+                    "title": clean_text(title, 200),
+                    "company": clean_text(company, 100),
+                    "link": link,
+                    "source": "internshala",
+                    "location": "remote",
+                    "duration": clean_text(duration, 50),
+                    "stipend": clean_stipend(stipend),
                     "apply_by": None,
-                    "skills": skills
+                    "skills": clean_skills(skills)
                 }
+
+
                 jobs_to_process.append(job_data)
                 count += 1
             except: continue

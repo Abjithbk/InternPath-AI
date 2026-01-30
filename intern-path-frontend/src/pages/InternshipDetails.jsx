@@ -1,29 +1,54 @@
 import React from 'react'
-import { MapPin, Building2, AlertTriangle } from "lucide-react";
+import { MapPin, Building2, AlertTriangle, ArrowLeft } from "lucide-react";
 import ProgressBar from "../component/ProgressBar";
-import { useParams } from 'react-router-dom';
+import { useLocation,useNavigate,useParams } from 'react-router-dom';
 const InternshipDetails = () => {
     const {id} = useParams()
+    const location = useLocation();
+
+    const internship = location.state?.internship;
+    const navigate = useNavigate()
+
+    if(!internship) {
+      return (
+        <div className="p-10 text-center text-red-500">
+        Data not found. Please go back.
+      </div>
+      )
+    }
+
+    const skillsArray = internship.skills.split(',').map(s => s.trim())
   return (
     <div className="min-h-screen bg-gray-50 px-10 py-8">
-      
+      <button
+        onClick={() => navigate(-1,{replace:true})}
+        className="
+          flex items-center gap-2 mb-4
+          text-indigo-600 font-medium
+          hover:text-indigo-800 transition
+        "
+      >
+        <ArrowLeft className="w-5 h-5" />
+        Back to Internships
+      </button>
+
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold">
         Internship Details – ID {id}
       </h1>
         <h1 className="text-3xl font-bold text-gray-900">
-          Backend Developer Intern
+          {internship.title}
         </h1>
 
         <div className="flex items-center gap-6 mt-2 text-gray-600">
           <span className="flex items-center gap-2">
             <Building2 className="w-4 h-4" />
-            TechNova
+            {internship.company}
           </span>
           <span className="flex items-center gap-2">
             <MapPin className="w-4 h-4" />
-            Remote
+            {internship.location}
           </span>
         </div>
       </div>
@@ -52,9 +77,9 @@ const InternshipDetails = () => {
             </h2>
 
             <div className="flex gap-2 mb-4 flex-wrap">
-              {["Java", "Spring Boot", "Rest API"].map(skill => (
+              {skillsArray.map((skill,index) => (
                 <span
-                  key={skill}
+                  key={index}
                   className="px-4 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm"
                 >
                   {skill}
@@ -84,8 +109,8 @@ const InternshipDetails = () => {
               Internship Details
             </h2>
 
-            <p className="mb-2">💰 <b>Stipend:</b> ₹10,000/month</p>
-            <p>⏳ <b>Duration:</b> 3 Months</p>
+            <p className="mb-2">💰 <b>Stipend:</b> {internship.stipend}</p>
+            <p>⏳ <b>Duration:</b> {internship.duration}</p>
           </div>
         </div>
 
@@ -116,6 +141,7 @@ const InternshipDetails = () => {
             </div>
 
             <button
+             onClick={() => window.open(internship.link, "_blank")}
               className="
                 w-full mt-5 py-3 rounded-lg
                 bg-indigo-600 text-white font-semibold

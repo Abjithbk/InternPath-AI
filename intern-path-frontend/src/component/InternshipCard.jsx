@@ -2,11 +2,20 @@ import React from 'react'
 import { MapPin } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 
-const InternshipCard = ({ id,title,company,location,tags,match,matchColor,}) => {
+const InternshipCard = ({ id,title,company,location,duration,stipend,link,skills="",match,matchColor,}) => {
   const navigate = useNavigate()
+
+  const skillsArray = skills.split(",").map(skill => skill.trim());
+  
   return (
      <div onClick={() => {
-        navigate(`/Internship/${id}`);
+        navigate(`/Internship/${id}`,{
+          state: {
+            internship : {
+              id, title, company, location, skills, duration, stipend,link
+            }
+          }
+        },{replace : true});
      }}
       className="
         bg-white rounded-xl border border-gray-200
@@ -30,12 +39,12 @@ const InternshipCard = ({ id,title,company,location,tags,match,matchColor,}) => 
       </div>
 
       <div className="flex flex-wrap gap-2 mt-4">
-        {tags.map((tag, index) => (
+        {skillsArray.map((skill, index) => (
           <span
             key={index}
             className="px-3 py-1 text-xs bg-indigo-50 text-indigo-600 rounded-full"
           >
-            {tag}
+            {skill}
           </span>
         ))}
       </div>
@@ -48,6 +57,7 @@ const InternshipCard = ({ id,title,company,location,tags,match,matchColor,}) => 
         </span>
 
         <button
+          onClick={(e) => e.stopPropagation()}
           className="
             bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium
             hover:bg-indigo-700 transition
