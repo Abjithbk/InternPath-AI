@@ -1,37 +1,64 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import InternshipCard from '../component/InternshipCard'
 import { Filter } from 'lucide-react'
+import api from '../axios'
 
 const internship = () => {
-     const internships = [
-    {
-      id:1,
-      title: "Backend Developer intern",
-      company: "TechNova",
-      location: "Remote",
-      tags: ["Java", "Spring Boot", "Rest API"],
-      match: 63,
-      matchColor: "bg-red-100 text-red-600",
-    },
-    {
-      id:2,
-      title: "Frontend Developer intern",
-      company: "PixelWorks",
-      location: "Bangalore",
-      tags: ["HTML", "CSS", "React"],
-      match: 78,
-      matchColor: "bg-yellow-100 text-yellow-700",
-    },
-    {
-      id:3,
-      title: "Data Science Intern",
-      company: "InsightAI",
-      location: "Hybrid",
-      tags: ["Python", "Pandas", "ML"],
-      match: 92,
-      matchColor: "bg-green-100 text-green-700",
-    },
-  ]
+     
+  const [internships,setInternships] = useState([])
+  const [allInternships,setAllInternships] = useState([])
+  const [showFilters,setShowFilters] = useState(false)
+  const [search,setSearch] = useState("")
+  const [domain,setDomain] = useState(null)
+   useEffect( () => {
+    const internshipDetails = async () => {
+      try {
+        const res = await api.get("/jobs/");
+        console.log(res.data.data);
+        setInternships(res.data.data);
+        setAllInternships(res.data.data)
+      }
+      catch(err) {
+        console.log(err);
+      }
+   }
+    const fetchSearch = async () => {
+     try {
+      if(search.trim() === "") {
+        setInternships(allInternships)
+        return;
+      }
+      const res = await api.get("/jobs/search",{
+        params : {
+          q:search
+        }
+      })
+      setInternships(res.data.data);
+     }
+     catch(err) {
+      console.log(err);
+     }
+    }
+    internshipDetails()
+    fetchSearch()
+   },[search])
+
+  
+   const fetchByDomain = async (selectedDomain) => {
+      try {
+        if (domain === selectedDomain) {
+        setDomain(null)
+        setInternships(allInternships)
+        return
+      }
+        setDomain(selectedDomain)
+        const res = await api.get(`/jobs/filter?domain=${selectedDomain}`)
+        setInternships(res.data.data)
+      } catch (err) {
+        console.error(err)
+      }
+}
+
 
   return (
      <div  className="min-h-screen bg-gray-50 px-8 py-10">
@@ -44,7 +71,11 @@ const internship = () => {
         <div className="relative flex-1">
           <input
             type="text"
-            placeholder="Search internships by role.."
+            placeholder="Search internships"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value)
+            }}
             className="
               w-full px-4 py-3 rounded-lg border border-gray-200
               focus:outline-none focus:ring-2 focus:ring-indigo-500
@@ -53,6 +84,9 @@ const internship = () => {
         </div>
 
         <button
+        onClick={() => {
+          setShowFilters(prev => !prev);
+        }}
           className="
             flex items-center gap-2 px-4 py-3
             bg-indigo-50 text-indigo-600
@@ -71,10 +105,68 @@ const internship = () => {
           <InternshipCard key={index} {...item} />
         ))}
 
-        {internships.slice(1).map((item, index) => (
-          <InternshipCard key={`dup-${index}`} {...item} />
+      </div>
+      {showFilters && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center">
+    
+    {/* Background Blur */}
+    <div
+      className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+      onClick={() => setShowFilters(false)}
+    />
+
+    {/* Filter Modal */}
+    <div
+      className="
+        relative z-10 w-full max-w-md bg-white rounded-xl
+        p-6 shadow-xl
+        transform transition-all duration-300
+        scale-100 opacity-100
+      "
+    >
+      {/* Header */}
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold text-gray-900">
+          Filter by Domain
+        </h2>
+        <button
+          onClick={() => setShowFilters(false)}
+          className="text-gray-400 hover:text-gray-600 text-xl"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Domain Buttons - Vertical */}
+      <div className="flex flex-col gap-3">
+        {[
+          { key: "ai", label: "Artificial Intelligence" },
+          { key: "web", label: "Web Development" },
+          { key: "data", label: "Data Science" },
+          { key: "mobile", label: "Mobile Development" },
+        ].map((d) => (
+          <button
+            key={d.key}
+            onClick={() => {
+              fetchByDomain(d.key)
+              setShowFilters(false)
+            }}
+            className={`
+              px-4 py-2 rounded-lg text-sm font-medium text-left
+              ${domain === d.key
+                ? "bg-indigo-600 text-white"
+                : "bg-indigo-50 text-indigo-600 hover:bg-indigo-100"}
+            `}
+          >
+            {d.label}
+          </button>
         ))}
       </div>
+    </div>
+  </div>
+)}
+
+
     </div>
   )
 }

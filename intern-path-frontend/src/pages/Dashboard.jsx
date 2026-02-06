@@ -11,16 +11,21 @@ const Dashboard = () => {
       if(token) {
         try {
           const decoded = jwtDecode(token);
-          console.log(decoded);
+          if(decoded.exp * 1000 < Date.now()) {
+            localStorage.removeItem("access_token");
+            navigate("/login");
+            return
+          }
           
           setUser(decoded);
         }
         catch(err) {
           localStorage.removeItem("access_token");
+          navigate("/login");
         }
       }
 
-    },[])
+    },[navigate])
   return (
     <div className="bg-white min-h-screen">
       {/* Navbar */}
@@ -32,11 +37,6 @@ const Dashboard = () => {
               Welcome, {user.username}
             </span>
 
-            <button
-              className="px-5 py-2 rounded-full bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
-            >
-              Get started
-            </button>
           </div>
           ) :(
             <div className="space-x-4">
@@ -45,12 +45,6 @@ const Dashboard = () => {
                 className="px-5 py-2 rounded-full text-blue-600 font-medium hover:bg-blue-50 transition"
               >
                 Sign in
-              </button>
-
-              <button
-                className="px-5 py-2 rounded-full bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
-              >
-                Get started
               </button>
             </div>
           )
