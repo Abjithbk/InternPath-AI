@@ -13,5 +13,5 @@ jobs:
     steps:
       - name: Call scraper API
         run: |
-          curl -X POST "https://YOUR-RENDER-URL/automation/scrape-weekly" \
+          curl -X POST "https://https://internpath-ai.onrender.com/automation/scrape-weekly" \
           -H "X-API-KEY: ${{ secrets.SCRAPER_API_KEY }}"
