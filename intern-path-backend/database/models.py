@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean,Date,ForeignKey,JSON
+from sqlalchemy import Column, Integer, String, Boolean,Date,ForeignKey,JSON,Float
 from sqlalchemy.orm import relationship
 from database.database import Base
 
@@ -45,7 +45,7 @@ class UserProfile(Base):
     semester = Column(Integer)
     college = Column(String)
     course = Column(String)
-
+    cgpa = Column(Float)
     skills = Column(JSON)
     projects = Column(JSON)
 

@@ -38,6 +38,7 @@ def create_user_profile(
         semester=profile.semester,
         college=profile.college,
         course=profile.course,
+        cgpa=profile.cgpa,
         skills=profile.skills or [],
         projects=profile.projects or []
     )
@@ -81,8 +82,14 @@ def update_user_profile(
     
     updated_data = profile.model_dump(exclude_unset=True)
 
+    if "skills" in updated_data:
+        db_profile.skills = list(set(db_profile.skills+updated_data["skills"]))
+    if "projects" in updated_data:
+        db_profile.projects.extend(updated_data["projects"])
+
     for field,value in updated_data.items():
-        setattr(db_profile,field,value)
+        if field not in ["skills","projects"]:
+            setattr(db_profile,field,value)
 
     db.commit()
     db.refresh(db_profile)

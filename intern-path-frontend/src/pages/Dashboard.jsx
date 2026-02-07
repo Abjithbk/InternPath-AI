@@ -1,142 +1,299 @@
-import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom';
-import { jwtDecode } from "jwt-decode"
+import React, { useEffect, useState } from "react";
+import api from "../axios";
+import { useContext } from "react";
+import { UserContext } from "../context/UserContext.jsx";
+import { toast } from "react-toastify";
 const Dashboard = () => {
-    const navigate = useNavigate();
+  const [profile,setProfile] = useState(null)
+  const [newSkill,setNewSkill] = useState("")
+  const [showSkillInput,setShowSkillInput] = useState(false)
 
-    const [user,setUser] = useState(null);
+  const [newProject,setNewProject] = useState({
+    title:"",
+    description:"",
+    role:"",
+    tech_stack:[]
+  });
+   const [showProjectForm, setShowProjectForm] = useState(false);
 
-    useEffect(()=> {
-      const token = localStorage.getItem("access_token");
-      if(token) {
-        try {
-          const decoded = jwtDecode(token);
-          if(decoded.exp * 1000 < Date.now()) {
-            localStorage.removeItem("access_token");
-            navigate("/login");
-            return
-          }
-          
-          setUser(decoded);
-        }
-        catch(err) {
-          localStorage.removeItem("access_token");
-          navigate("/login");
-        }
+  const [techInput,setTechInput] = useState("");
+  const {user} = useContext(UserContext)
+  useEffect(() => {
+     const fetchUserProfile =async () => {
+      try {
+        const res = await api.get("/profile/");
+        console.log(res.data)
+        setProfile(res.data)
       }
+      catch(err) {
+        console.error(err);
+      }
+     }
+     fetchUserProfile()
+  },[])
+  if(!profile) {
+    return <div className="p-10">Loading...</div>;
+  }
 
-    },[navigate])
+    const handleAddSkill = async () => {
+      if(!newSkill.trim()) return;
+
+      try {
+        const res = await api.put("/profile/",{
+          skills:[newSkill]
+        });
+        setProfile(prev => ({...prev,skills:[...prev.skills,newSkill] }));
+        setNewSkill("")
+        setShowSkillInput(false);
+        toast.success("New skills added successfully");
+      }
+      catch(err) {
+        toast.error("Failed to add skill!");
+      }
+    }
+      const handleAddTech = () => {
+    if (!techInput.trim()) return;
+    setNewProject(prev => ({
+      ...prev,
+      tech_stack: [...prev.tech_stack, techInput]
+    }));
+    setTechInput("");
+  };
+
+    const handleAddProject = async () => {
+    if (!newProject.title || !newProject.description) return;
+
+    try {
+      await api.put("/profile/", { projects: [newProject] });
+      setProfile(prev => ({ ...prev, projects: [...prev.projects, newProject] }));
+      setNewProject({ title: "", description: "", role: "", tech_stack: [] });
+      setTechInput("");
+      setShowProjectForm(false);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to add project!");
+    }
+  };
   return (
-    <div className="bg-white min-h-screen">
-      {/* Navbar */}
-      <nav className="flex justify-end items-center px-6 py-4 bg-slate-100">
-        {
-          user ? (
-             <div className="flex items-center gap-4">
-            <span className="text-slate-700 font-medium">
-              Welcome, {user.username}
-            </span>
+    <div className="min-h-screen bg-[#EEF2FF] px-6 py-10">
+      <div className="max-w-7xl mx-auto space-y-10">
 
-          </div>
-          ) :(
-            <div className="space-x-4">
-              <button
-                onClick={() => navigate("/Signup")}
-                className="px-5 py-2 rounded-full text-blue-600 font-medium hover:bg-blue-50 transition"
-              >
-                Sign in
-              </button>
-            </div>
-          )
-        }
-      </nav>
+        {/* PROFILE BANNER */}
+        <div className="bg-indigo-600 rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between text-white shadow-lg">
 
-      {/* Hero Section */}
-      <section className="px-6 py-16 max-w-7xl mx-auto">
-        <h1 className="text-3xl sm:text-4xl font-semibold text-center text-slate-900 mb-16">
-          Your tailored internship pathway awaits
-        </h1>
-
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-          
-          {/* Left Panel */}
-          <div>
-            <h2 className="text-lg font-medium text-slate-800 mb-4">
-              Your readiness insights
-            </h2>
-            <div className="h-64 rounded-xl bg-blue-50 border border-blue-100 animate-fade-in" />
-          </div>
-
-          {/* Right Panel */}
-          <div>
-            <h2 className="text-lg font-medium text-slate-800 mb-6">
-              Your personalised dashboard
-            </h2>
-
-            <div className="flex flex-wrap gap-4 mb-6">
-              <DashboardCard title="Strengths" bg="bg-green-100" text="text-green-700" />
-              <DashboardCard title="Weakness" bg="bg-red-100" text="text-red-700" />
-              <DashboardCard title="Skill gap" bg="bg-yellow-100" text="text-yellow-700" />
-              <DashboardCard title="Internship Match" bg="bg-emerald-100" text="text-emerald-700" />
+          {/* Left */}
+          <div className="flex items-center gap-6">
+            <div className="w-20 h-20 rounded-full bg-emerald-500 flex items-center justify-center text-3xl font-bold shadow-md">
+              AJ
             </div>
 
-            <p className="text-sm text-slate-600">
-              Get actionable insights to improve your skills and match with the
-              right internships.
-            </p>
+            <div>
+              <h2 className="text-3xl font-semibold">{user?.name}</h2>
+              <p className="text-indigo-100 mt-1">
+                {profile.year}rd Year &nbsp; • &nbsp; {profile.course}
+              </p>
+            </div>
+          </div>
+
+          {/* Right */}
+          <div className="bg-white text-gray-800 rounded-xl px-6 py-4 mt-6 md:mt-0 flex items-center gap-6 shadow-md">
+            <div>
+              <p className="text-sm text-gray-500">Internship Readiness Score</p>
+              <h3 className="text-4xl font-bold text-indigo-600">82%</h3>
+            </div>
+            <button className="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2 rounded-lg font-medium transition">
+              Edit Profile
+            </button>
           </div>
         </div>
 
-        {/* Features */}
-        <div className="mt-20 text-center">
-          <h2 className="text-lg font-medium text-slate-900 mb-10">
-            Your features include
-          </h2>
+        {/* GRID SECTION */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 text-slate-700">
-            <p>Skill gap assessment</p>
-            <p>Readiness scoring system</p>
-            <p>Curated internship listings</p>
-            <p>Personalized recommendations</p>
-            <p>AI driven mentorship insights</p>
-            <p>24/7 support chat</p>
+          {/* LEFT COLUMN */}
+          <div className="space-y-8">
+
+            {/* STATS */}
+            <div className="bg-white rounded-xl p-6 shadow-sm space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+                  ✈️
+                </div>
+                <p className="text-gray-700">
+                  <span className="font-semibold">12</span> Applications sent
+                </p>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                  💡
+                </div>
+                <p className="text-gray-700">
+                  <span className="font-semibold">{profile.skills.length}</span> Skills added
+                </p>
+              </div>
+            </div>
+
+            {/* ACADEMIC DETAILS */}
+            <div className="bg-white rounded-xl p-6 shadow-sm space-y-3">
+              <h3 className="text-lg font-semibold text-indigo-600">
+                Academic Details
+              </h3>
+
+              <p className="text-gray-700">Semester: {profile.semester}</p>
+              <p className="text-gray-700">
+                College: {profile.college}
+              </p>
+              <p className="text-gray-700">CGPA: {profile.cgpa}</p>
+            </div>
           </div>
 
-          {/* CTA */}
-          <button onClick={() => {
-            navigate("/Internship")
-          }} className="mt-12 px-10 py-3 rounded-full bg-blue-600 text-white font-medium
-                             hover:bg-blue-700 transition active:scale-95">
-            Explore Now
-          </button>
-        </div>
-      </section>
+          {/* RIGHT COLUMN */}
+          <div className="lg:col-span-2 space-y-8">
 
-      {/* Animations */}
-      <style>
-        {`
-          @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-          .animate-fade-in {
-            animation: fadeIn 0.6s ease-out;
-          }
-        `}
-      </style>
-    </div>
-  )
-}
-const DashboardCard = ({ title, bg, text }) => {
-  return (
-    <div
-      className={`w-32 h-32 rounded-xl ${bg} flex items-center justify-center
-                  shadow-sm transition hover:scale-105`}
-    >
-      <span className={`font-medium text-sm ${text}`}>{title}</span>
+            {/* SKILLS */}
+            <div className="bg-white rounded-xl p-6 shadow-sm">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-indigo-600">
+                  Skills
+                </h3>
+                <button onClick={() => {
+                  setShowSkillInput(!showSkillInput)
+                }} className="text-indigo-600 font-medium cursor-pointer">
+                  + Add Skill
+                </button>
+              </div>
+             
+              {showSkillInput && (
+                <div className="flex gap-2 mb-4">
+                  <input
+                    value={newSkill}
+                    onChange={(e) => setNewSkill(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleAddSkill();
+                    }}
+                    type="text"
+                    placeholder="Enter new skill"
+                    className="border border-gray-300 rounded-lg px-3 py-1 w-full"
+                  />
+                  <button onClick={handleAddSkill} className="bg-indigo-600 text-white px-4 py-1 rounded-lg">Add</button>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-3">
+                {profile.skills.map((skill) => (
+                  <span
+                    key={skill}
+                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* PROJECTS */}
+            <div className="bg-white rounded-xl p-6 shadow-sm">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-indigo-600">
+                  Projects
+                </h3>
+                <button onClick={() => {
+                  setShowProjectForm(!showProjectForm)
+                }} className="text-indigo-600 font-medium cursor-pointer">
+                  + Add Project
+                </button>
+              </div>
+              {showProjectForm && (
+                <div className="space-y-3 mb-4 border p-4 rounded-lg">
+                  <input
+                    type="text"
+                    placeholder="Title"
+                    value={newProject.title}
+                    onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
+                    className="border border-gray-300 px-3 py-1 rounded-lg w-full"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Description"
+                    value={newProject.description}
+                    onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
+                    className="border border-gray-300 px-3 py-1 rounded-lg w-full"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Role"
+                    value={newProject.role}
+                    onChange={(e) => setNewProject({ ...newProject, role: e.target.value })}
+                    className="border border-gray-300 px-3 py-1 rounded-lg w-full"
+                  />
+
+                  {/* Tech stack input */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Add tech"
+                      value={techInput}
+                      onChange={(e) => setTechInput(e.target.value)}
+                      className="border border-gray-300 px-3 py-1 rounded-lg w-full"
+                    />
+                    <button onClick={handleAddTech} className="bg-indigo-600 text-white px-4 py-1 rounded-lg">Add Tech</button>
+                  </div>
+
+                  {/* Show current tech stack */}
+                  <div className="flex flex-wrap gap-2">
+                    {newProject.tech_stack.map((tech, i) => (
+                      <span key={i} className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-sm">{tech}</span>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={handleAddProject}
+                    className="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2 rounded-lg font-medium transition mt-2"
+                  >
+                    Save Project
+                  </button>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                {
+                  profile.projects.map((project,index) => (
+                    <div
+                      key={index}
+                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
+                    >
+                      <h3 className="font-semibold text-lg">{project.title}</h3>
+                      <p className="text-gray-600 mt-1">{project.description}</p>
+                      <p className="mt-3 text-gray-700">
+                        <span className="font-semibold">Role:</span> {project.role}
+                      </p>
+                      <div className="mt-2">
+                        <span className="font-semibold text-gray-700">Tech Stack:</span>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {project.tech_stack.map((tech, i) => (
+                            <span
+                              key={i}
+                              className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-sm"
+                            >
+                              {tech}
+                            </span>
+                          ))}
+                        </div>
+
+                      </div>
+                    </div>
+
+                  ))
+                }
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
 
-export default Dashboard
+export default Dashboard;

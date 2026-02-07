@@ -1,174 +1,157 @@
-import React, { useEffect, useState } from 'react'
-import InternshipCard from '../component/InternshipCard'
-import { Filter } from 'lucide-react'
-import api from '../axios'
+import React, { useEffect, useState } from "react"
+import InternshipCard from "../component/InternshipCard"
+import { Filter } from "lucide-react"
+import api from "../axios"
 
-const internship = () => {
-     
-  const [internships,setInternships] = useState([])
-  const [allInternships,setAllInternships] = useState([])
-  const [showFilters,setShowFilters] = useState(false)
-  const [search,setSearch] = useState("")
-  const [domain,setDomain] = useState(null)
-   useEffect( () => {
+const Internship = () => {
+  const [internships, setInternships] = useState([])
+  const [allInternships, setAllInternships] = useState([])
+  const [showFilters, setShowFilters] = useState(false)
+  const [search, setSearch] = useState("")
+  const [domain, setDomain] = useState(null)
+
+  useEffect(() => {
     const internshipDetails = async () => {
       try {
-        const res = await api.get("/jobs/");
-        console.log(res.data.data);
-        setInternships(res.data.data);
+        const res = await api.get("/jobs/")
+        setInternships(res.data.data)
         setAllInternships(res.data.data)
+      } catch (err) {
+        console.log(err)
       }
-      catch(err) {
-        console.log(err);
-      }
-   }
-    const fetchSearch = async () => {
-     try {
-      if(search.trim() === "") {
-        setInternships(allInternships)
-        return;
-      }
-      const res = await api.get("/jobs/search",{
-        params : {
-          q:search
-        }
-      })
-      setInternships(res.data.data);
-     }
-     catch(err) {
-      console.log(err);
-     }
     }
+
+    const fetchSearch = async () => {
+      try {
+        if (search.trim() === "") {
+          setInternships(allInternships)
+          return
+        }
+        const res = await api.get("/jobs/search", {
+          params: { q: search },
+        })
+        setInternships(res.data.data)
+      } catch (err) {
+        console.log(err)
+      }
+    }
+
     internshipDetails()
     fetchSearch()
-   },[search])
+  }, [search])
 
-  
-   const fetchByDomain = async (selectedDomain) => {
-      try {
-        if (domain === selectedDomain) {
+  const fetchByDomain = async (selectedDomain) => {
+    try {
+      if (domain === selectedDomain) {
         setDomain(null)
         setInternships(allInternships)
         return
       }
-        setDomain(selectedDomain)
-        const res = await api.get(`/jobs/filter?domain=${selectedDomain}`)
-        setInternships(res.data.data)
-      } catch (err) {
-        console.error(err)
-      }
-}
-
+      setDomain(selectedDomain)
+      const res = await api.get(`/jobs/filter?domain=${selectedDomain}`)
+      setInternships(res.data.data)
+    } catch (err) {
+      console.error(err)
+    }
+  }
 
   return (
-     <div  className="min-h-screen bg-gray-50 px-8 py-10">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">
-        Internship Opportunities
-      </h1>
+    <div className="min-h-screen bg-[#F5F7FB] pt-28 pb-12">
+      <div className="max-w-7xl mx-auto px-6">
+        {/* Title */}
+        <h1 className="text-4xl font-bold text-[#3C3F8C] mb-8">
+          Internship Opportunities
+        </h1>
 
-      {/* Search & Filter */}
-      <div className="flex items-center gap-4 mb-8">
-        <div className="relative flex-1">
-          <input
-            type="text"
-            placeholder="Search internships"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value)
-            }}
+        {/* Search + Filter */}
+        <div className="flex items-center gap-4 mb-12">
+          <div className="flex-1 bg-[#EEF2FF] rounded-xl px-5 py-3 flex items-center gap-3">
+            🔍
+            <input
+              type="text"
+              placeholder="Search internships by role.."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="bg-transparent outline-none w-full text-sm"
+            />
+          </div>
+
+          <button
+            onClick={() => setShowFilters(true)}
             className="
-              w-full px-4 py-3 rounded-lg border border-gray-200
-              focus:outline-none focus:ring-2 focus:ring-indigo-500
+              flex items-center gap-2
+              px-6 py-3 rounded-xl
+              bg-[#EEF2FF] text-[#4B50C6]
+              font-medium text-sm
+              hover:bg-indigo-100 transition
             "
-          />
+          >
+            <Filter className="w-5 h-5" />
+            Filters
+          </button>
         </div>
 
-        <button
-        onClick={() => {
-          setShowFilters(prev => !prev);
-        }}
-          className="
-            flex items-center gap-2 px-4 py-3
-            bg-indigo-50 text-indigo-600
-            rounded-lg font-medium
-            hover:bg-indigo-100 transition
-          "
-        >
-          <Filter className="w-5 h-5" />
-          Filters
-        </button>
+        {/* Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {internships.map((item, index) => (
+            <InternshipCard key={index} {...item} />
+          ))}
+        </div>
       </div>
 
-      {/* Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {internships.map((item, index) => (
-          <InternshipCard key={index} {...item} />
-        ))}
-
-      </div>
+      {/* Filter Modal */}
       {showFilters && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center">
-    
-    {/* Background Blur */}
-    <div
-      className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-      onClick={() => setShowFilters(false)}
-    />
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowFilters(false)}
+          />
 
-    {/* Filter Modal */}
-    <div
-      className="
-        relative z-10 w-full max-w-md bg-white rounded-xl
-        p-6 shadow-xl
-        transform transition-all duration-300
-        scale-100 opacity-100
-      "
-    >
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">
-          Filter by Domain
-        </h2>
-        <button
-          onClick={() => setShowFilters(false)}
-          className="text-gray-400 hover:text-gray-600 text-xl"
-        >
-          ✕
-        </button>
-      </div>
+          <div className="relative z-10 w-full max-w-md bg-white rounded-2xl p-6 shadow-xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Filter by Domain
+              </h2>
+              <button
+                onClick={() => setShowFilters(false)}
+                className="text-gray-400 hover:text-gray-600 text-xl"
+              >
+                ✕
+              </button>
+            </div>
 
-      {/* Domain Buttons - Vertical */}
-      <div className="flex flex-col gap-3">
-        {[
-          { key: "ai", label: "Artificial Intelligence" },
-          { key: "web", label: "Web Development" },
-          { key: "data", label: "Data Science" },
-          { key: "mobile", label: "Mobile Development" },
-        ].map((d) => (
-          <button
-            key={d.key}
-            onClick={() => {
-              fetchByDomain(d.key)
-              setShowFilters(false)
-            }}
-            className={`
-              px-4 py-2 rounded-lg text-sm font-medium text-left
-              ${domain === d.key
-                ? "bg-indigo-600 text-white"
-                : "bg-indigo-50 text-indigo-600 hover:bg-indigo-100"}
-            `}
-          >
-            {d.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  </div>
-)}
-
-
+            <div className="flex flex-col gap-3">
+              {[
+                { key: "ai", label: "Artificial Intelligence" },
+                { key: "web", label: "Web Development" },
+                { key: "data", label: "Data Science" },
+                { key: "mobile", label: "Mobile Development" },
+              ].map((d) => (
+                <button
+                  key={d.key}
+                  onClick={() => {
+                    fetchByDomain(d.key)
+                    setShowFilters(false)
+                  }}
+                  className={`
+                    px-4 py-3 rounded-xl text-sm font-medium text-left
+                    transition
+                    ${
+                      domain === d.key
+                        ? "bg-indigo-600 text-white"
+                        : "bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                    }
+                  `}
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-export default internship
+export default Internship

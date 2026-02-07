@@ -34,7 +34,7 @@ class UserProfileCreate(BaseModel):
     semester: Optional[int] = None
     college: Optional[str] = None
     course:Optional[str] = None
-
+    cgpa: float | None = None
     skills: Optional[List[str]] = []
     projects:Optional[List[Dict]] = []
 
@@ -43,7 +43,7 @@ class UserProfileUpdate(BaseModel):
     semester: Optional[int] = None
     college: Optional[str] = None
     course: Optional[str] = None
-
+    cgpa: float | None = None
     skills: Optional[List[str]] = None
     projects: Optional[List[Dict]] = None
 
@@ -56,7 +56,7 @@ class UserProfileOut(BaseModel):
     semester: Optional[int]
     college: Optional[str]
     course: Optional[str]
-
+    cgpa:float
     skills: List[str]
     projects: List[Dict]
 

@@ -28,7 +28,7 @@ const LoginPage = () => {
       }
 
       toast.success("Login successful 🎉");
-      navigate("/");
+      navigate("/profile-completion");
     } catch (error) {
       toast.error(
         error.response?.data?.message ||
