@@ -5,3 +5,33 @@
     transform: scale(1);
   }
 }
+
+/* Hide scrollbar but keep scrolling */
+::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Firefox */
+html {
+  scrollbar-width: none;
+}
+
+body {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.input {
+  @apply w-full px-4 py-3 rounded-xl border border-gray-200
+  text-sm bg-white
+  focus:outline-none focus:ring-2 focus:ring-indigo-500;
+}
+

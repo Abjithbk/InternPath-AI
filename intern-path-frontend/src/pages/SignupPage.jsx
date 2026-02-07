@@ -98,12 +98,12 @@ const SignupPage = () => {
           </button>
         </form>
         <p className="text-center text-sm text-gray-600 mt-6">
-          Don’t have an account?{" "}
+          If you already have an account?{" "}
           <span
             onClick={() => navigate("/Login")}
             className="text-indigo-600 font-medium cursor-pointer hover:underline"
           >
-            Sign up
+            Sign in
           </span>
         </p>
       </div>
