@@ -6,8 +6,8 @@ const AppLayout = () => {
   return (
     <>
       <Navbar />
-      <main className="pt-20 min-h-screen bg-[#f5f7fb] overflow-x-hidden">
-        <div className="max-w-7xl mx-auto px-6">
+      <main className="pt-16 min-h-screen bg-[#f5f7fb] overflow-x-hidden">
+        <div className="max-w-7xl mx-auto px-6 ">
           <Outlet />
         </div>
       </main>

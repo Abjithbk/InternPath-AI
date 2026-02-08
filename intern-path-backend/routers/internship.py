@@ -6,7 +6,7 @@ from sqlalchemy import text
 
 from database import models, database
 from scraper import intershala as scraper
-
+from dependencies import get_current_user
 # Fix for Windows event loop
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
@@ -137,3 +137,37 @@ def search_internship(q : str = Query(None,description="Search keyword"),db:Sess
     return {
         "data":results
     }    
+
+@router.get("/recommendation")
+def recommend_internship(
+    db:Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    profile = db.query(models.UserProfile).filter(models.UserProfile.user_id == current_user.id).first()
+
+    if not profile:
+        return {
+            "error":"Profile not found"
+        }
+    
+    user_skills = set(profile.skills)
+    internships = db.query(models.Internship).all()
+
+    recommendations = []
+
+    for internship in internships:
+        required_skills = set(internship.skills)
+        match_count = len(user_skills & required_skills)
+        total_required = len(required_skills)
+        match_percentage = int((match_count/total_required) * 100) if total_required > 0 else 0
+
+        skill_gap = list(required_skills - user_skills)
+
+        recommendations.append({
+            "title":internship.title,
+            "match_percentage":match_percentage,
+            "skill_gap":skill_gap
+        })
+
+        recommendations.sort(key = lambda x:x["match_percentage"],reverse=True)
+        return recommendations
