@@ -21,7 +21,7 @@ const SignupPage = () => {
          await api.post("/signup",formData)
          
          toast.success("Signup successfully..")
-        navigate("/login");
+        navigate("/Login");
        }
        catch(error) {
          toast.error(error.response?.data?.message || "Something went wrong..")

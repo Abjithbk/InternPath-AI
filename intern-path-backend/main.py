@@ -16,7 +16,7 @@ app = FastAPI()
 # Add CORS so Frontend can talk to Backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173","http://localhost:3000"],  # Change this to your frontend URL in production
+    allow_origins=["http://localhost:5173","http://localhost:3000","https://intern-path-ai-teal.vercel.app"],  # Change this to your frontend URL in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

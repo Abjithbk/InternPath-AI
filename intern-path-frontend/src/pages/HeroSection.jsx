@@ -12,7 +12,7 @@ const HeroSection = () => {
           const decoded = jwtDecode(token);
           if(decoded.exp * 1000 < Date.now()) {
             localStorage.removeItem("access_token");
-            navigate("/login");
+            navigate("/Login");
             return
           }
           
@@ -20,7 +20,7 @@ const HeroSection = () => {
         }
         catch(err) {
           localStorage.removeItem("access_token");
-          navigate("/login");
+          navigate("/Login");
         }
       }
 
