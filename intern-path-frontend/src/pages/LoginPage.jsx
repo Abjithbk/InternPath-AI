@@ -3,7 +3,7 @@ import { FcGoogle } from "react-icons/fc";
 import { useNavigate } from "react-router-dom";
 import api from "../axios";
 import { toast } from "react-toastify";
-import { GoogleLogin,GoogleOAuthProvider } from "@react-oauth/google"
+import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -17,6 +17,24 @@ const LoginPage = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const checkProfile = async () => {
+    try {
+      const res = await api.get("/profile/");
+      const profile = res.data;
+      console.log(profile);
+
+      // If profile exists, redirect to home
+      if (profile && Object.keys(profile).length > 0) {
+        navigate("/");
+      } else {
+        navigate("/profile-completion");
+      }
+    } catch (err) {
+      console.log("No profile found, redirecting to profile completion");
+      navigate("/profile-completion");
+    }
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -28,7 +46,9 @@ const LoginPage = () => {
       }
 
       toast.success("Login successful 🎉");
-      navigate("/profile-completion");
+      
+      // Check if user has profile
+      await checkProfile();
     } catch (error) {
       toast.error(
         error.response?.data?.message ||
@@ -41,15 +61,15 @@ const LoginPage = () => {
   const handleGoogleLogin = async (response) => {
     try {
       const token = response.credential;
-      const res = await  api.post("/google-auth",{token});
+      const res = await api.post("/google-auth", { token });
 
-      localStorage.setItem("access_token",res.data.access_token);
+      localStorage.setItem("access_token", res.data.access_token);
       toast.success("Google Login Success!");
-      navigate("/")
-    }
-    catch(err) {
-       toast.error("Google login failed!");
-
+      
+      // Check if user has profile
+      await checkProfile();
+    } catch (err) {
+      toast.error("Google login failed!");
     }
   };
 
@@ -77,7 +97,6 @@ const LoginPage = () => {
             )}
           />
         </GoogleOAuthProvider>
-
 
         {/* OR Divider */}
         <div className="flex items-center my-8">
@@ -125,7 +144,7 @@ const LoginPage = () => {
 
         {/* Footer */}
         <p className="text-center text-sm text-gray-600 mt-6">
-          Don’t have an account?{" "}
+          Don't have an account?{" "}
           <span
             onClick={() => navigate("/Signup")}
             className="text-indigo-600 font-medium cursor-pointer hover:underline"

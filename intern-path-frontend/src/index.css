@@ -35,3 +35,21 @@ body {
   focus:outline-none focus:ring-2 focus:ring-indigo-500;
 }
 
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee 30s linear infinite;
+}
+
+.marquee-container {
+  overflow: hidden;
+  width: 100%;
+  background-color: #3C3F8C; /* Matching your theme color */
+  color: white;
+  padding: 10px 0;
+}

@@ -11,6 +11,7 @@ const InternshipCard = ({
   stipend,
   link,
   skills = "",
+  skill_gap,
   match=0,
   maxMatch
 }) => {
@@ -38,6 +39,7 @@ const InternshipCard = ({
               skills,
               duration,
               stipend,
+              skill_gap,
               link,
             },
           },
@@ -51,26 +53,29 @@ const InternshipCard = ({
         transition-all duration-300
         hover:-translate-y-1 hover:shadow-lg
         cursor-pointer
+        flex flex-col
+        h-[320px]
+        w-full
       "
     >
       {/* Title */}
-      <h2 className="text-lg font-semibold text-[#3C3F8C]">
+      <h2 className="text-lg font-semibold text-[#3C3F8C] line-clamp-2 h-14 capitalize" >
         {title}
       </h2>
 
       {/* Company */}
-      <p className="text-sm text-gray-500 mt-1">
+      <p className="text-sm text-gray-500 mt-1 line-clamp-1 h-5 capitalize">
         {company}
       </p>
 
       {/* Location */}
-      <div className="flex items-center gap-2 text-sm text-gray-600 mt-3">
-        <MapPin className="w-4 h-4 text-indigo-500" />
-        {location}
+      <div className="flex items-center gap-2 text-sm text-gray-600 mt-3 h-5">
+        <MapPin className="w-4 h-4 text-indigo-500 flex-shrink-0" />
+        <span className="truncate capitalize">{location}</span>
       </div>
 
       {/* Skills */}
-      <div className="flex flex-wrap gap-2 mt-4">
+      <div className="flex flex-wrap gap-2 mt-4 h-16 overflow-hidden content-start">
         {skillsArray.slice(0, 4).map((skill, index) => (
           <span
             key={index}
@@ -80,6 +85,7 @@ const InternshipCard = ({
               text-xs
               px-3 py-1
               rounded-full
+              h-fit
             "
           >
             {skill}
@@ -87,8 +93,11 @@ const InternshipCard = ({
         ))}
       </div>
 
+      {/* Spacer */}
+      <div className="flex-grow"></div>
+
       {/* Bottom */}
-      <div className="flex items-center justify-between mt-6">
+      <div className="flex items-center justify-between pt-4">
         <span
           className={`
             px-4 py-2 rounded-xl text-sm font-medium

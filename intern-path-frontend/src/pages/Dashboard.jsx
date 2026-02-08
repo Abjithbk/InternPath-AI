@@ -3,6 +3,7 @@ import api from "../axios";
 import { useContext } from "react";
 import { UserContext } from "../context/UserContext.jsx";
 import { toast } from "react-toastify";
+import MovingNotice from "../component/MovingNotice.jsx";
 const Dashboard = () => {
   const [profile,setProfile] = useState(null)
   const [newSkill,setNewSkill] = useState("")
@@ -77,6 +78,8 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-[#EEF2FF] px-6 py-10">
       <div className="max-w-7xl mx-auto space-y-10">
+        <MovingNotice />
+
 
         {/* PROFILE BANNER */}
         <div className="bg-indigo-600 rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between text-white shadow-lg">
@@ -84,7 +87,7 @@ const Dashboard = () => {
           {/* Left */}
           <div className="flex items-center gap-6">
             <div className="w-20 h-20 rounded-full bg-emerald-500 flex items-center justify-center text-3xl font-bold shadow-md">
-              AJ
+               {user?.name?.[0]?.toUpperCase()}
             </div>
 
             <div>
@@ -258,7 +261,7 @@ const Dashboard = () => {
 
               <div className="space-y-4">
                 {
-                  profile.projects.map((project,index) => (
+                  (profile.projects || []).map((project,index) => (
                     <div
                       key={index}
                       className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
@@ -271,7 +274,7 @@ const Dashboard = () => {
                       <div className="mt-2">
                         <span className="font-semibold text-gray-700">Tech Stack:</span>
                         <div className="flex flex-wrap gap-2 mt-1">
-                          {project.tech_stack.map((tech, i) => (
+                          {(project.tech_stack || []).map((tech, i) => (
                             <span
                               key={i}
                               className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-sm"
