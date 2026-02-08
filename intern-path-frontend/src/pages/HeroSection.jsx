@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from "jwt-decode"
+
 const HeroSection = () => {
     const navigate = useNavigate();
-    const [user,setUser] = useState(null);
+    const [user, setUser] = useState(null);
 
-    useEffect(()=> {
+    useEffect(() => {
       const token = localStorage.getItem("access_token");
-      if(token) {
+      if (token) {
         try {
           const decoded = jwtDecode(token);
-          if(decoded.exp * 1000 < Date.now()) {
+          if (decoded.exp * 1000 < Date.now()) {
             localStorage.removeItem("access_token");
             navigate("/Login");
             return
@@ -18,13 +19,24 @@ const HeroSection = () => {
           
           setUser(decoded);
         }
-        catch(err) {
+        catch (err) {
           localStorage.removeItem("access_token");
           navigate("/Login");
         }
       }
+    }, [navigate])
 
-    },[navigate])
+    const handleExploreNow = () => {
+      const token = localStorage.getItem("access_token");
+      
+      if (!token) {
+        // User not logged in, redirect to login
+        navigate("/Login");
+      } else {
+        // User is logged in, go to dashboard
+        navigate("/dashboard");
+      }
+    }
     
   return (
     <div className="bg-white min-h-screen">
@@ -36,9 +48,8 @@ const HeroSection = () => {
             <span className="text-slate-700 font-medium">
               Welcome, {user.username}
             </span>
-
           </div>
-          ) :(
+          ) : (
             <div className="space-x-4">
               <button
                 onClick={() => navigate("/Signup")}
@@ -104,10 +115,11 @@ const HeroSection = () => {
           </div>
 
           {/* CTA */}
-          <button onClick={() => {
-            navigate("/dashboard")
-          }} className="mt-12 px-10 py-3 rounded-full bg-blue-600 text-white font-medium
-                             hover:bg-blue-700 transition active:scale-95">
+          <button 
+            onClick={handleExploreNow}
+            className="mt-12 px-10 py-3 rounded-full bg-blue-600 text-white font-medium
+                       hover:bg-blue-700 transition active:scale-95"
+          >
             Explore Now
           </button>
         </div>
@@ -128,6 +140,7 @@ const HeroSection = () => {
     </div>
   )
 }
+
 const DashboardCard = ({ title, bg, text }) => {
   return (
     <div
