@@ -1,1 +1,1 @@
-export const BASEURL = "http://127.0.0.1:8006"
+export const BASEURL = "https://internpath-ai-t5j2.onrender.com"
