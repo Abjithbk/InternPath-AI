@@ -3,7 +3,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {BrowserRouter as Router,Routes,Route} from 'react-router-dom'
 import HeroSection from "./pages/HeroSection"
-import Internship from "./pages/internship"
+import Internship from "./pages/Internship.jsx"
 import InternshipDetails from "./pages/InternshipDetails"
 import Chatbot from "./pages/Chatbot"
 import SignupPage from "./pages/SignupPage"
