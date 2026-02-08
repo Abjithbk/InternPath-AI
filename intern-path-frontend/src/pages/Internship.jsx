@@ -20,6 +20,7 @@ const Internship = () => {
   try {
     const res = await api.get("/jobs/recommendation")
     const recommendedData = res.data
+    console.log(recommendedData)
 
     // Create match map
     const map = {}
@@ -135,13 +136,16 @@ const Internship = () => {
       Recommended for you
     </h2>
 
-    <div className="flex gap-6 overflow-x-auto scrollbar-hide pb-2">
+    {/* 1. Use 'flex' for sliding, 'gap-8' matches your grid spacing */}
+    <div className="flex gap-8 overflow-x-auto scrollbar-hide pb-8 items-stretch snap-x snap-mandatory">
       {recommended.map((item) => (
-        <div key={item.id} className="min-w-[320px] flex">
+        /* 2. Fix the width here so they don't stretch (350px - 380px is standard) */
+        <div key={item.id} className="min-w-[340px] max-w-[340px] md:min-w-[380px] md:max-w-[380px] snap-start flex">
+          {/* 3. 'flex-grow' ensures the card fills this fixed-width box */}
           <InternshipCard
             {...item}
             match={item.match_percentage}
-            maxMatch={maxMatch} // color relative to highest match
+            maxMatch={maxMatch}
           />
         </div>
       ))}
