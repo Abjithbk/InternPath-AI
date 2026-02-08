@@ -107,119 +107,131 @@ async def fetch_details(context, link):
     return backup_skills, apply_date
 
 # --- MAIN SCRAPER ---
-async def scrape_internshala(keyword: str, db: Session, limit: int = 15):
-    clean_term = " ".join([w for w in keyword.lower().split() if w not in ["internship", "job", "intern"]]).strip() or keyword
-    print(f"   👉 [Internshala] Searching '{clean_term}'...")
-    
+async def scrape_internshala(db: Session, limit: int = 15):
+    # Predefined keywords — no user input
+    keywords = ["python","web development","data science","node.js"]
+    total_saved = 0
+
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True, args=BROWSER_ARGS)
         context = await browser.new_context(user_agent=random.choice(USER_AGENTS))
-        page = await create_stealth_page(context)
 
-        try:
-            url = f"https://internshala.com/internships/keywords-{clean_term.replace(' ', '-')}"
-            await page.goto(url, timeout=45000)
-            await page.wait_for_selector(".individual_internship", timeout=15000)
-            cards = await page.query_selector_all(".individual_internship")
-        except:
-            await browser.close(); return 0
+        for keyword in keywords:
+            clean_term = " ".join([w for w in keyword.lower().split() if w not in ["internship", "job", "intern"]]).strip() or keyword
+            print(f"   👉 [Internshala] Searching '{clean_term}'...")
 
-        jobs_to_process = []
-        count = 0
-        
-        for card in cards:
-            if count >= limit: break
+            page = await create_stealth_page(context)
+
             try:
-                title_el = await card.query_selector("h3")
-                if not title_el: continue
-                title = await title_el.inner_text()
+                url = f"https://internshala.com/internships/keywords-{clean_term.replace(' ', '-')}"
+                await page.goto(url, timeout=45000)
+                await page.wait_for_selector(".individual_internship", timeout=15000)
+                cards = await page.query_selector_all(".individual_internship")
+            except:
+                await page.close()
+                continue  # skip this keyword if page fails
 
-                if not is_software_job(title, clean_term): continue
+            jobs_to_process = []
+            count = 0
 
-                href = await card.get_attribute("data-href")
-                if not href:
-                    link_el = await card.query_selector(".view_detail_button") or await card.query_selector("a")
-                    if link_el: href = await link_el.get_attribute("href")
-                if not href: continue
-                link = f"https://internshala.com{href}"
-                
-                full_text = await card.inner_text()
-                
-                stipend_match = re.search(r"(₹\s?[\d,]+(\s?-\s?[\d,]+)?(?:\s?/\s?\w+)?|Unpaid|Performance Based)", full_text, re.IGNORECASE)
-                stipend = stipend_match.group(0).strip() if stipend_match else "Hidden"
-                
-                duration_match = re.search(r"(\d+\s?(?:Month|Week)s?)", full_text, re.IGNORECASE)
-                duration = duration_match.group(0).strip() if duration_match else "Flexible"
+            for card in cards:
+                if count >= limit:
+                    break
+                try:
+                    title_el = await card.query_selector("h3")
+                    if not title_el:
+                        continue
+                    title = await title_el.inner_text()
+                    if not is_software_job(title, clean_term):
+                        continue
 
-                company_el = await card.query_selector(".company_name")
-                company = await company_el.inner_text() if company_el else "Unknown"
-                
-                # --- 🔥 INSTANT SKILL EXTRACTION 🔥 ---
-                skills = "N/A"
-                # Using .job_skills (with underscore) based on your Firefox screenshot
-                skills_el = await card.query_selector(".job_skills") or await card.query_selector(".tags_container")
-                
-                if skills_el:
-                    raw_skills = await skills_el.inner_text()
-                    skills = ", ".join([s.strip() for s in raw_skills.replace("\n", ",").split(',') if s.strip()])
-                
-                # --- DATA CLEANING ---
-                def clean_text(text, max_len=200):
-                    if not text:
-                        return None
-                    return re.sub(r'\s+', ' ', text).strip().lower()[:max_len]
+                    href = await card.get_attribute("data-href")
+                    if not href:
+                        link_el = await card.query_selector(".view_detail_button") or await card.query_selector("a")
+                        if link_el:
+                            href = await link_el.get_attribute("href")
+                    if not href:
+                        continue
+                    link = f"https://internshala.com{href}"
 
-                def clean_skills(skills):
-                    if not skills:
-                        return "N/A"
-                    skills = re.sub(r'\+\d+\s*more', '', skills.lower())
-                    parts = skills.replace("\n", ",").split(",")
-                    cleaned = sorted(set(s.strip() for s in parts if len(s.strip()) > 1))
-                    return ", ".join(cleaned) if cleaned else "N/A"
+                    full_text = await card.inner_text()
+                    stipend_match = re.search(r"(₹\s?[\d,]+(\s?-\s?[\d,]+)?(?:\s?/\s?\w+)?|Unpaid|Performance Based)", full_text, re.IGNORECASE)
+                    stipend = stipend_match.group(0).strip() if stipend_match else "Hidden"
 
-                def clean_stipend(text):
-                    nums = re.findall(r'\d+', text.replace(',', ''))
-                    if len(nums) >= 2:
-                        return f"{nums[0]}-{nums[1]}"
-                    elif len(nums) == 1:
-                        return nums[0]
-                    return "unpaid"
-                
-                job_data = {
-                    "title": clean_text(title, 200),
-                    "company": clean_text(company, 100),
-                    "link": link,
-                    "source": "internshala",
-                    "location": "remote",
-                    "duration": clean_text(duration, 50),
-                    "stipend": clean_stipend(stipend),
-                    "apply_by": None,
-                    "skills": clean_skills(skills)
-                }
+                    duration_match = re.search(r"(\d+\s?(?:Month|Week)s?)", full_text, re.IGNORECASE)
+                    duration = duration_match.group(0).strip() if duration_match else "Flexible"
 
+                    company_el = await card.query_selector(".company_name")
+                    company = await company_el.inner_text() if company_el else "Unknown"
 
-                jobs_to_process.append(job_data)
-                count += 1
-            except: continue
+                    skills = "N/A"
+                    skills_el = await card.query_selector(".job_skills") or await card.query_selector(".tags_container")
+                    if skills_el:
+                        raw_skills = await skills_el.inner_text()
+                        skills = ", ".join([s.strip() for s in raw_skills.replace("\n", ",").split(',') if s.strip()])
 
-        await page.close() 
+                    # --- Clean Data ---
+                    def clean_text(text, max_len=200):
+                        if not text:
+                            return None
+                        return re.sub(r'\s+', ' ', text).strip().lower()[:max_len]
 
-        # PHASE 2: Deep Scrape
-        print(f"   ⏳ Verifying Dates for {len(jobs_to_process)} jobs...")
-        chunk_size = 3 
-        for i in range(0, len(jobs_to_process), chunk_size):
-            chunk = jobs_to_process[i:i + chunk_size]
-            tasks = [fetch_details(context, job['link']) for job in chunk]
-            results = await asyncio.gather(*tasks)
-            
-            for job, (backup_skills, deep_date) in zip(chunk, results):
-                if job['skills'] == "N/A" and backup_skills:
-                    job['skills'] = backup_skills
-                if deep_date: job['apply_by'] = deep_date
-                elif not job['apply_by']: job['apply_by'] = get_fallback_date()
-                save_job(db, job, keyword)
-        
-        print(f"   ✅ Saved {count} verified jobs.")
+                    def clean_skills(skills):
+                        if not skills:
+                            return "N/A"
+                        skills = re.sub(r'\+\d+\s*more', '', skills.lower())
+                        parts = skills.replace("\n", ",").split(",")
+                        cleaned = sorted(set(s.strip() for s in parts if len(s.strip()) > 1))
+                        return ", ".join(cleaned) if cleaned else "N/A"
+
+                    def clean_stipend(text):
+                        nums = re.findall(r'\d+', text.replace(',', ''))
+                        if len(nums) >= 2:
+                            return f"{nums[0]}-{nums[1]}"
+                        elif len(nums) == 1:
+                            return nums[0]
+                        return "unpaid"
+
+                    job_data = {
+                        "title": clean_text(title, 200),
+                        "company": clean_text(company, 100),
+                        "link": link,
+                        "source": "internshala",
+                        "location": "remote",
+                        "duration": clean_text(duration, 50),
+                        "stipend": clean_stipend(stipend),
+                        "apply_by": None,
+                        "skills": clean_skills(skills)
+                    }
+
+                    jobs_to_process.append(job_data)
+                    count += 1
+                except:
+                    continue
+
+            await page.close()
+
+            # --- Deep Scrape Dates ---
+            print(f"   ⏳ Verifying Dates for {len(jobs_to_process)} jobs for '{keyword}'...")
+            chunk_size = 3
+            for i in range(0, len(jobs_to_process), chunk_size):
+                chunk = jobs_to_process[i:i + chunk_size]
+                tasks = [fetch_details(context, job['link']) for job in chunk]
+                results = await asyncio.gather(*tasks)
+
+                for job, (backup_skills, deep_date) in zip(chunk, results):
+                    if job['skills'] == "N/A" and backup_skills:
+                        job['skills'] = backup_skills
+                    if deep_date:
+                        job['apply_by'] = deep_date
+                    elif not job['apply_by']:
+                        job['apply_by'] = get_fallback_date()
+                    save_job(db, job, keyword)
+
+            total_saved += count
+            print(f"   ✅ Saved {count} verified jobs for '{keyword}'")
+
         await browser.close()
         gc.collect()
-        return count
+        print(f"\n🎉 Total jobs saved across all keywords: {total_saved}")
+        return total_saved

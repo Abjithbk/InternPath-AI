@@ -50,53 +50,15 @@ async def get_internship_details(db: Session = Depends(get_db)):
 
 # --- 🔍 MAIN SEARCH ENDPOINT ---
 @router.get("/scrape")
-async def get_jobs(query: str, db: Session = Depends(get_db)):
-    clean_keyword = query.lower().strip()
-
-    # 1️⃣ FETCH CACHE
+async def get_jobs(db: Session = Depends(get_db)):
     try:
-        cached_jobs = (
-            db.query(models.Internship)
-            .filter(models.Internship.keyword == clean_keyword)
-            .limit(20)
-            .all()
-        )
-    except Exception:
-        raise HTTPException(
-            status_code=500,
-            detail="Database broken. Visit /jobs/fix-db"
-        )
-
-    # 2️⃣ VALIDATE CACHE
-    has_data = len(cached_jobs) >= 5
-    has_real_skills = any(
-        job.skills not in ["N/A", "Loading...", "View Details"]
-        for job in cached_jobs
-    )
-
-    if has_data and has_real_skills:
-        print(f"✅ Serving cached data for '{clean_keyword}'")
-        return {"source": "cache", "data": cached_jobs}
-
-    # 3️⃣ SCRAPE LIVE
-    print(f"❄️ Cache invalid. Scraping for '{clean_keyword}'")
-
-    try:
-        count = await scraper.scrape_internshala(
-            clean_keyword,
-            db,
-            limit=10
-        )
-        new_data = (
-            db.query(models.Internship)
-            .filter(models.Internship.keyword == clean_keyword)
-            .all()
-        )
-        return {"source": "live", "count": count, "data": new_data}
-
+        # No query needed — scraper will handle predefined keywords internally
+        total_saved = await scraper.scrape_internshala(db, limit=10)
+        return {"source": "live", "total_saved": total_saved}
     except Exception as e:
         print(f"🔥 Scraper error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 # Filter endpoint
 
