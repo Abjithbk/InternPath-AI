@@ -17,8 +17,8 @@ import { UserProvider } from "./context/UserContext.jsx";
 function App() {
   return (
     <div>
-      <UserProvider>
       <Router basename="">
+      <UserProvider>
           <Routes>
             <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
@@ -41,8 +41,8 @@ function App() {
               pauseOnHover
               draggable
             />
-      </Router>
       </UserProvider>
+      </Router>
     </div>
   )
 }

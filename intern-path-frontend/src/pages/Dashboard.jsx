@@ -17,7 +17,7 @@ const Dashboard = () => {
    const [showProjectForm, setShowProjectForm] = useState(false);
 
   const [techInput,setTechInput] = useState("");
-  const {user} = useContext(UserContext)
+  const {user,loading} = useContext(UserContext)
   useEffect(() => {
      const fetchUserProfile =async () => {
       try {
@@ -88,7 +88,7 @@ const Dashboard = () => {
             </div>
 
             <div>
-              <h2 className="text-3xl font-semibold">{user?.name}</h2>
+              <h2 className="text-3xl font-semibold">{user?.name || "_"}</h2>
               <p className="text-indigo-100 mt-1">
                 {profile.year}rd Year &nbsp; • &nbsp; {profile.course}
               </p>
