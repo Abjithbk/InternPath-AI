@@ -150,13 +150,13 @@ def recommend_internship(
             "error":"Profile not found"
         }
     
-    user_skills = set(profile.skills)
+    user_skills = set(skill.strip().lower() for skill in profile.skills)
     internships = db.query(models.Internship).all()
 
     recommendations = []
 
     for internship in internships:
-        required_skills = set(internship.skills)
+        required_skills = set(skill.strip().lower() for skill in internship.skills.split(","))
         match_count = len(user_skills & required_skills)
         total_required = len(required_skills)
         match_percentage = int((match_count/total_required) * 100) if total_required > 0 else 0
@@ -164,10 +164,17 @@ def recommend_internship(
         skill_gap = list(required_skills - user_skills)
 
         recommendations.append({
+            "id":internship.id,
             "title":internship.title,
+            "company":internship.company,
+            "duration":internship.duration,
+            "location":internship.location,
+            "link":internship.link,
+            "skills":internship.skills,
+            "stipend":internship.stipend,
             "match_percentage":match_percentage,
             "skill_gap":skill_gap
         })
 
-        recommendations.sort(key = lambda x:x["match_percentage"],reverse=True)
-        return recommendations
+    recommendations.sort(key = lambda x:x["match_percentage"],reverse=True)
+    return recommendations

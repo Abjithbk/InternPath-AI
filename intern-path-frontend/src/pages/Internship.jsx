@@ -9,12 +9,49 @@ const Internship = () => {
   const [showFilters, setShowFilters] = useState(false)
   const [search, setSearch] = useState("")
   const [domain, setDomain] = useState(null)
+  const [recommended,setRecommended] = useState([])
+  const [matchMap,setMatchMap] = useState({})
+  const [maxMatch, setMaxMatch] = useState(0)
+
 
   useEffect(() => {
+
+    const fetchRecommendations = async () => {
+  try {
+    const res = await api.get("/jobs/recommendation")
+    const recommendedData = res.data
+
+    // Create match map
+    const map = {}
+    recommendedData.forEach((item) => {
+      map[item.id] = item.match_percentage
+    })
+    setMatchMap(map)
+
+    // Calculate maxMatch from all recommendations
+    const maxMatchValue = recommendedData.length > 0
+      ? Math.max(...recommendedData.map(item => item.match_percentage))
+      : 0
+    setMaxMatch(maxMatchValue)
+
+    // Sort by match and take top 5
+    const top5 = recommendedData
+      .sort((a, b) => b.match_percentage - a.match_percentage)
+      .slice(0, 5)
+
+    setRecommended(top5)
+
+  } catch (err) {
+    console.log(err)
+  }
+}
+
     const internshipDetails = async () => {
       try {
         const res = await api.get("/jobs/")
         setInternships(res.data.data)
+        console.log(res.data.data);
+        
         setAllInternships(res.data.data)
       } catch (err) {
         console.log(err)
@@ -37,7 +74,9 @@ const Internship = () => {
     }
 
     internshipDetails()
+    fetchRecommendations()
     fetchSearch()
+    
   }, [search])
 
   const fetchByDomain = async (selectedDomain) => {
@@ -90,11 +129,32 @@ const Internship = () => {
             Filters
           </button>
         </div>
+        {recommended.length > 0 && (
+  <div className="mb-14">
+    <h2 className="text-xl font-semibold text-[#3C3F8C] mb-5">
+      Recommended for you
+    </h2>
+
+    <div className="flex gap-6 overflow-x-auto scrollbar-hide pb-2">
+      {recommended.map((item) => (
+        <div key={item.id} className="min-w-[320px] flex">
+          <InternshipCard
+            {...item}
+            match={item.match_percentage}
+            maxMatch={maxMatch} // color relative to highest match
+          />
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+
 
         {/* Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {internships.map((item, index) => (
-            <InternshipCard key={index} {...item} />
+            <InternshipCard key={index} {...item} match={matchMap[item.id] ?? 0} maxMatch={maxMatch} />
           ))}
         </div>
       </div>
