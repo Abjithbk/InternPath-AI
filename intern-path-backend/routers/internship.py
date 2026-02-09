@@ -36,6 +36,8 @@ def fix_database():
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+
+# To get the internship details from database
 @router.get("/")
 async def get_internship_details(db: Session = Depends(get_db)):
     try:

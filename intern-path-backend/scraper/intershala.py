@@ -175,6 +175,23 @@ async def scrape_internshala(db: Session, limit: int = 15):
                         if not text:
                             return None
                         return re.sub(r'\s+', ' ', text).strip().lower()[:max_len]
+                    
+                    def clean_company_name(company:str,max_len = 100):
+                        if not company:
+                            return "unknown"
+
+                        # remove junk labels
+                        company = re.sub(
+                            r'\b(actively hiring|hiring now|urgent hiring)\b',
+                            '',
+                            company,
+                            flags=re.IGNORECASE
+                        )
+
+                        # normalize spaces
+                        company = re.sub(r'\s+', ' ', company).strip()
+
+                        return company[:max_len]
 
                     def clean_skills(skills):
                         if not skills:
@@ -194,7 +211,7 @@ async def scrape_internshala(db: Session, limit: int = 15):
 
                     job_data = {
                         "title": clean_text(title, 200),
-                        "company": clean_text(company, 100),
+                        "company": clean_company_name(company, 100),
                         "link": link,
                         "source": "internshala",
                         "location": "remote",
