@@ -28,7 +28,8 @@ def get_current_user(
             detail="Invalid or expired token",
             headers= {"WWW-Authenticate": "Bearer"},
         )
-    user_id = payload.get("sub")
+    print(payload)
+    user_id = payload.get("sub") or payload.get("user_id")
 
     if user_id is None:
         raise HTTPException(

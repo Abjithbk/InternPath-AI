@@ -1,19 +1,30 @@
 import React from 'react'
+import { Plus } from 'lucide-react'
 
-const ChatHeader = () => {
+const ChatHeader = ({ onNewChat }) => {
   return (
-     <div className="flex items-center gap-3 px-8 py-4 bg-indigo-50 border-b">
-
-      <div className="w-10 h-10 rounded-full border border-gray-200 overflow-hidden bg-white flex items-center justify-center shrink-0">
-        <img 
-          src="/chatbotLogo.png" 
-          alt="Mentor Logo" 
-          className="w-full h-full object-cover scale-[1.8] translate-y-[-2px]" 
-        />
+    <div className="flex items-center justify-between px-8 py-4 bg-indigo-50 border-b">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full border border-gray-200 overflow-hidden bg-white flex items-center justify-center shrink-0">
+          <img 
+            src="/chatbotLogo.png" 
+            alt="Mentor Logo" 
+            className="w-full h-full object-cover scale-[1.8] translate-y-[-2px]" 
+          />
+        </div>
+        <h1 className="text-xl font-semibold text-gray-800">
+          InternPath AI Mentor
+        </h1>
       </div>
-      <h1 className="text-xl font-semibold text-gray-800">
-        InternPath AI Mentor
-      </h1>
+
+      {/* New Chat Button */}
+      <button
+        onClick={onNewChat}
+        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition text-sm font-medium"
+      >
+        <Plus className="w-4 h-4" />
+        New Chat
+      </button>
     </div>
   )
 }
