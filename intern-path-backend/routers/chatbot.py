@@ -25,6 +25,7 @@ def chat(req : ChatRequest,db:Session = Depends(get_db),current_user = Depends(g
 
     try:
         user_id = current_user.id
+        print(user_id)
         if not req.session_id:
             session = ChatSession(user_id = user_id)
             db.add(session)
@@ -35,6 +36,8 @@ def chat(req : ChatRequest,db:Session = Depends(get_db),current_user = Depends(g
                 ChatSession.id == req.session_id,
                 ChatSession.user_id == user_id
             ).first()
+
+            print(session)
 
             if not session:
                 raise HTTPException(
@@ -144,6 +147,7 @@ def delete_session(
         ChatSession.id == session_id,
         ChatSession.user_id == user_id  # ✅ Security check
     ).first()
+    print(session)
     
     if not session:
         raise HTTPException(

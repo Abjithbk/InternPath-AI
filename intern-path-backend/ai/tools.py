@@ -1,21 +1,27 @@
 from langchain_core.tools import tool
-from duckduckgo_search import DDGS
+from ddgs import DDGS  # ✅ Updated import
 
 @tool(description="Search latest info from internet")
 def web_search(query: str) -> str:
     """Search latest info from internet."""
     try:
-        with DDGS() as ddgs:
-            # Get more results for better information
-            results = list(ddgs.text(
-                keywords=query,
-                max_results=5,  # Increased from 3
-                region='wt-wt',
-                safesearch='moderate'
-            ))
+        print(f"🔍 Searching web: '{query}'")
+        
+        # ✅ New ddgs usage (no context manager needed)
+        ddgs = DDGS()
+        results = ddgs.text(
+            query,
+            max_results=5
+        )
+        
+        # Convert to list
+        results = list(results)
         
         if not results:
+            print("⚠️ No results from DDGS")
             return "No current information found from web search."
+        
+        print(f"✅ Found {len(results)} results")
         
         output = []
         for i, r in enumerate(results[:3], 1):  # Use top 3 results
@@ -31,14 +37,17 @@ Link: {link}
 """
             output.append(result_text)
         
-        return "\n".join(output)
+        full_output = "\n".join(output)
+        print(f"📄 Output length: {len(full_output)} chars")
+        print(f"📄 Preview: {full_output[:200]}...")
+        
+        return full_output
         
     except Exception as e:
         import traceback
-        print(f"⚠️ Web search error: {e}")
+        print(f"❌ Web search error: {e}")
         traceback.print_exc()
         return f"Web search unavailable: {str(e)}"
-
 
 
 def should_use_web_search(user_input: str) -> bool:
@@ -82,7 +91,8 @@ def should_use_web_search(user_input: str) -> bool:
     # Category 6: COMPANIES
     company_keywords = [
         "companies hiring", "top companies", "best companies",
-        "startups", "mnc", "faang", "maang", "product based"
+        "startups", "mnc", "faang", "maang", "product based",
+        "google", "microsoft", "amazon", "meta", "apple", "netflix"  # ✅ Added specific companies
     ]
     
     # Category 7: STATISTICS & COMPARISONS
@@ -105,5 +115,4 @@ def should_use_web_search(user_input: str) -> bool:
     )
     
     # Check if any keyword matches
-    return any(keyword in user_input for keyword in all_keywords)        
-
+    return any(keyword in user_input for keyword in all_keywords)
