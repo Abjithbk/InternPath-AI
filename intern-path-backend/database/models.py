@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean,Date,ForeignKey,JSON,Float
+from sqlalchemy import Column, Integer, String, Boolean,Date,ForeignKey,JSON,Float,DateTime,Text
 from sqlalchemy.orm import relationship
 from database.database import Base
+from datetime import datetime
 
 class User(Base):
     __tablename__ = "users"
@@ -44,9 +45,30 @@ class UserProfile(Base):
     year = Column(Integer)
     semester = Column(Integer)
     college = Column(String)
-    course = Column(String)
+    department = Column(String)
     cgpa = Column(Float)
     skills = Column(JSON)
     projects = Column(JSON)
 
     owner = relationship("User",back_populates="userprofile")
+
+
+class ChatSession(Base):
+    __tablename__ = "chat_session"
+
+    id = Column(Integer,primary_key=True,index=True)
+    user_id = Column(Integer,index=True)
+    created_at = Column(DateTime,default=datetime.utcnow)
+
+    messages = relationship("ChatMessage",back_populates="session",cascade="all, delete-orphan")
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+
+    id = Column(Integer,primary_key=True,index=True)
+    session_id = Column(Integer,ForeignKey("chat_session.id",ondelete="CASCADE"))
+    role = Column(String)
+    content = Column(Text)
+    timestamp = Column(DateTime,default=datetime.utcnow)
+
+    session = relationship("ChatSession",back_populates="messages")

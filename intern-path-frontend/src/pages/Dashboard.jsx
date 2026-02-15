@@ -93,7 +93,7 @@ const Dashboard = () => {
             <div>
               <h2 className="text-3xl font-semibold">{user?.name || "_"}</h2>
               <p className="text-indigo-100 mt-1">
-                {profile.year}rd Year &nbsp; • &nbsp; {profile.course}
+                {profile.year}rd Year &nbsp; • &nbsp; {profile.department}
               </p>
             </div>
           </div>

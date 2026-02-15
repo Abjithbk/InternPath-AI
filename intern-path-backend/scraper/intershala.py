@@ -22,6 +22,13 @@ USER_AGENTS = [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15"
 ]
 
+DEPARTMENT_KEYWORDS = {
+    "cse": ["python", "web development", "node.js", "software development"],
+    "ece": ["embedded systems", "vlsi", "iot", "electronics"],
+    "eee": ["electrical engineering", "power systems", "renewable energy"],
+    "ai-ml": ["machine learning", "data science", "deep learning"]
+}
+
 def get_fallback_date():
     return date.today() + timedelta(days=14)
 
@@ -108,7 +115,7 @@ async def fetch_details(context, link):
 
 # --- MAIN SCRAPER ---
 async def scrape_internshala(db: Session, limit: int = 15):
-    # Predefined keywords — no user input
+    
     keywords = ["python","web development","data science","node.js"]
     total_saved = 0
 
@@ -118,7 +125,7 @@ async def scrape_internshala(db: Session, limit: int = 15):
 
         for keyword in keywords:
             clean_term = " ".join([w for w in keyword.lower().split() if w not in ["internship", "job", "intern"]]).strip() or keyword
-            print(f"   👉 [Internshala] Searching '{clean_term}'...")
+            print(f"    [Internshala] Searching '{clean_term}'...")
 
             page = await create_stealth_page(context)
 
@@ -229,7 +236,7 @@ async def scrape_internshala(db: Session, limit: int = 15):
             await page.close()
 
             # --- Deep Scrape Dates ---
-            print(f"   ⏳ Verifying Dates for {len(jobs_to_process)} jobs for '{keyword}'...")
+            print(f"    Verifying Dates for {len(jobs_to_process)} jobs for '{keyword}'...")
             chunk_size = 3
             for i in range(0, len(jobs_to_process), chunk_size):
                 chunk = jobs_to_process[i:i + chunk_size]
@@ -246,7 +253,7 @@ async def scrape_internshala(db: Session, limit: int = 15):
                     save_job(db, job, keyword)
 
             total_saved += count
-            print(f"   ✅ Saved {count} verified jobs for '{keyword}'")
+            print(f"    Saved {count} verified jobs for '{keyword}'")
 
         await browser.close()
         gc.collect()

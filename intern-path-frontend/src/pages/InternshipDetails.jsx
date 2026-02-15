@@ -97,7 +97,7 @@ const InternshipDetails = () => {
                     </div>
 
                     {/* Students Like You Got Selected */}
-                    <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+                    {/* <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
                         <h2 className="text-xl font-semibold text-[#2E3A59] mb-5">
                             Students Like You Got Selected
                         </h2>
@@ -118,7 +118,7 @@ const InternshipDetails = () => {
                         <p className="text-sm text-gray-500 mt-6 leading-relaxed">
                             Based on students with similar skills, resume score, and projects.
                         </p>
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* RIGHT COLUMN - 1/3 width */}
