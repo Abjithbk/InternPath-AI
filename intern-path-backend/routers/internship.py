@@ -22,7 +22,7 @@ def get_db():
         db.close()
 
 
-# --- 🛠️ RUN ONCE IF DB IS BROKEN ---
+# ---RUN ONCE IF DB IS BROKEN ---
 @router.get("/fix-db")
 def fix_database():
     try:
@@ -50,7 +50,7 @@ async def get_internship_details(db: Session = Depends(get_db)):
         print(f"Database Error: {e}")
         raise HTTPException(status_code=500, detail="Database error. Try again...")
 
-# --- 🔍 MAIN SEARCH ENDPOINT ---
+# ---  MAIN SEARCH ENDPOINT ---
 @router.get("/scrape")
 async def get_jobs(db: Session = Depends(get_db)):
     try:
@@ -58,7 +58,7 @@ async def get_jobs(db: Session = Depends(get_db)):
         total_saved = await scraper.scrape_internshala(db, limit=10)
         return {"source": "live", "total_saved": total_saved}
     except Exception as e:
-        print(f"🔥 Scraper error: {e}")
+        print(f" Scraper error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

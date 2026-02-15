@@ -37,7 +37,7 @@ def create_user_profile(
         year=profile.year,
         semester=profile.semester,
         college=profile.college,
-        course=profile.course,
+        department=profile.department,
         cgpa=profile.cgpa,
         skills=profile.skills or [],
         projects=profile.projects or []

@@ -8,7 +8,7 @@ const CompleteProfile = () => {
     year: "",
     semester: "",
     college: "",
-    course: "",
+    department: "",
     cgpa: "",
     skills: [],
     projects: [{ title: "", description: "" }],
@@ -77,7 +77,7 @@ const CompleteProfile = () => {
             year:Number(formData.year),
             semester:Number(formData.semester),
             college:formData.college,
-            course:formData.course,
+            department:formData.department,
             cgpa:Number(formData.cgpa),
             skills:formData.skills,
             projects:formData.projects
@@ -145,14 +145,18 @@ const CompleteProfile = () => {
               className="input"
             />
 
-            <input
-              type="text"
-              name="course"
-              value={formData.course}
-              onChange={handleChange}
-              placeholder="Course"
-              className="input"
-            />
+            <select
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+                className="input"
+              >
+                <option value="">Select Department</option>
+                <option value="CSE">CSE</option>
+                <option value="ECE">ECE</option>
+                <option value="EEE">EEE</option>
+                <option value="AI & ML">AI & ML</option>
+              </select>
 
             <input
               type="number"
