@@ -6,10 +6,38 @@ def web_search(query: str) -> str:
     """Search latest info from internet."""
     try:
         with DDGS() as ddgs:
-            results = ddgs.text(query, max_results=3)
-            return "\n".join([r["body"] for r in results])
+            # Get more results for better information
+            results = list(ddgs.text(
+                keywords=query,
+                max_results=5,  # Increased from 3
+                region='wt-wt',
+                safesearch='moderate'
+            ))
+        
+        if not results:
+            return "No current information found from web search."
+        
+        output = []
+        for i, r in enumerate(results[:3], 1):  # Use top 3 results
+            title = r.get('title', 'No title')
+            body = r.get('body', '')
+            link = r.get('href', '')
+            
+            # Format each result clearly
+            result_text = f"""
+{i}. {title}
+{body}
+Link: {link}
+"""
+            output.append(result_text)
+        
+        return "\n".join(output)
+        
     except Exception as e:
-        return f"Search failed: {str(e)}"
+        import traceback
+        print(f"⚠️ Web search error: {e}")
+        traceback.print_exc()
+        return f"Web search unavailable: {str(e)}"
 
 
 
@@ -78,3 +106,4 @@ def should_use_web_search(user_input: str) -> bool:
     
     # Check if any keyword matches
     return any(keyword in user_input for keyword in all_keywords)        
+
