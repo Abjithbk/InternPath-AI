@@ -61,7 +61,8 @@ def chat(req : ChatRequest,db:Session = Depends(get_db),current_user = Depends(g
         
         result = graph.invoke({
             "input":req.message,
-            "history":history_text
+            "history":history_text,
+            "user_id":user_id
         })
 
         ai_response = result["output"]
