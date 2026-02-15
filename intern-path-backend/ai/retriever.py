@@ -1,4 +1,4 @@
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from .embeddings import get_embeddings
 
 def get_vector_store():
