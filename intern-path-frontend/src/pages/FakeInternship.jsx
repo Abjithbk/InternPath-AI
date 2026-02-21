@@ -1,18 +1,67 @@
 import React, { useState } from "react";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck,AlertTriangle,ShieldAlert } from "lucide-react";
+import api from '../axios';
 
 const FakeInternship = () => {
   const [url, setUrl] = useState("");
   const [result, setResult] = useState(null);
+  const [loading,setLoading] = useState(false);
+  const [error,setError] = useState("")
 
-  const handleCheck = () => {
-    // temporary mock result
-    setResult({
-      level: "Low Risk",
-      message:
-        "No major red flags detected. This internship looks safe.",
-    });
+  const handleCheck = async () => {
+    if(!url) {
+      setError("Please enter a url");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    setResult(null)
+
+    try {
+      const response = await api.post("/detect-fake-internship",{
+        url
+      });
+      setResult(response.data);
+   
+    }
+    catch(err) {
+      setError("Failed to analyse internship.");
+    }
+    finally {
+      setLoading(false);
+    }
   };
+   const getColorStyles = () => {
+    if (!result) return {};
+
+    if (result.risk_level === "High Risk") {
+      return {
+        bg: "bg-red-50",
+        border: "border-red-500",
+        text: "text-red-600",
+        icon: <ShieldAlert className="text-red-600 mt-1" />,
+      };
+    }
+
+    if (result.risk_level === "Medium Risk") {
+      return {
+        bg: "bg-yellow-50",
+        border: "border-yellow-500",
+        text: "text-yellow-600",
+        icon: <AlertTriangle className="text-yellow-600 mt-1" />,
+      };
+    }
+
+    return {
+      bg: "bg-green-50",
+      border: "border-green-500",
+      text: "text-green-600",
+      icon: <ShieldCheck className="text-green-600 mt-1" />,
+    };
+  };
+
+  const styles = getColorStyles();
 
   return (
     <div className="min-h-screen bg-[#EEF2FF] pt-24 px-6">
@@ -38,7 +87,10 @@ const FakeInternship = () => {
             type="text"
             placeholder="https://example.com/internship"
             value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            onChange={(e) => {setUrl(e.target.value)
+              setResult(null);
+              setError("")
+            }}
             className="
               w-full px-4 py-3 rounded-xl
               border-2 border-indigo-500
@@ -48,15 +100,18 @@ const FakeInternship = () => {
 
           <button
             onClick={handleCheck}
-            className="
-              mt-6 bg-indigo-600 hover:bg-indigo-700
-              text-white font-medium
-              px-6 py-3 rounded-xl
-              transition
-            "
+            disabled={!url || loading}
+            className={`mt-6 px-6 py-3 rounded-xl text-white font-medium transition
+            ${!url || loading 
+              ? "bg-gray-400 cursor-not-allowed" 
+              : "bg-indigo-600 hover:bg-indigo-700"}
+          `}
           >
-            Check internship
+            { loading ? "Analyzing.." : "Check internship" }
           </button>
+          {error && (
+            <p className="text-red-500 mt-4">{error}</p>
+          )}
         </div>
 
         {/* RESULT */}
@@ -66,16 +121,18 @@ const FakeInternship = () => {
               Result
             </h2>
 
-            <div className="flex items-start gap-4 bg-green-50 border-l-4 border-green-500 p-6 rounded-xl">
+            <div className={`flex items-start gap-4 ${styles.bg} border-l-4 ${styles.border} p-6 rounded-xl`}>
               <ShieldCheck className="text-green-600 mt-1" />
 
               <div>
-                <h3 className="font-semibold text-gray-900">
-                  {result.level}
+                <h3 className={`font-semibold ${styles.text} `}>
+                  {result.risk_level}
                 </h3>
-                <p className="text-gray-600 mt-1">
-                  {result.message}
-                </p>
+                <ul className="mt-2 text-gray-700 list-disc list-inside">
+                  {result.reasons.map((reason, index) => (
+                    <li key={index}>{reason}</li>
+                  ))}
+                </ul>
               </div>
             </div>
           </div>
