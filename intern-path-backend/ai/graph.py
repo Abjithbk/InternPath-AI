@@ -1,6 +1,6 @@
 from langgraph.graph import StateGraph, END
 from typing import TypedDict
-from langchain_community.chat_models import ChatOllama
+from langchain_ollama import ChatOllama
 from .retriever import get_retriever
 from .tools import web_search, should_use_web_search
 from database.models import User, UserProfile
