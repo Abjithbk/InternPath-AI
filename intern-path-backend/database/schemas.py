@@ -92,3 +92,6 @@ class ChatSessionResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+class URLRequest(BaseModel):
+    url: str
