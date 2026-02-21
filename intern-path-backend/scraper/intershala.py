@@ -116,7 +116,7 @@ async def fetch_details(context, link):
 # --- MAIN SCRAPER ---
 async def scrape_internshala(db: Session, limit: int = 15):
     
-    keywords = ["python","web development","data science","node.js"]
+    keywords = ["python","web development","data science","embedded systems"]
     total_saved = 0
 
     async with async_playwright() as p:
