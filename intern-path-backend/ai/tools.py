@@ -1,7 +1,7 @@
 from langchain_core.tools import tool
 from ddgs import DDGS  # ✅ Updated import
 
-@tool(description="Search latest info from internet")
+@tool
 def web_search(query: str) -> str:
     """Search latest info from internet."""
     try:
