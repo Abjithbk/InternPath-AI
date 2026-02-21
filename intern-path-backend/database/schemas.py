@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from datetime import date,datetime
 from typing import List, Optional, Dict
+from typing import Dict
 
 class SignupSchema(BaseModel):
     first_name: str
@@ -95,3 +96,11 @@ class ChatSessionResponse(BaseModel):
 
 class URLRequest(BaseModel):
     url: str
+
+
+
+class ResumeAnalysisResponse(BaseModel):
+    overall_score: int
+    grade: str
+    section_scores: Dict[str, float]
+    linguistic_features: Dict[str, float]

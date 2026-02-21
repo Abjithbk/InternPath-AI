@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 
+
 load_dotenv()
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # Local imports (Works when Root Directory = backend)
 from database.database import engine
 from database import models
-from routers import auth ,internship,user_profile,automation,chatbot,fake_detector
+from routers import auth ,internship,user_profile,automation,chatbot,fake_detector,resume_analyzer
 
 
 # Create Tables
@@ -36,5 +37,6 @@ app.include_router(user_profile.router)
 app.include_router(automation.router)
 app.include_router(chatbot.router)
 app.include_router(fake_detector.router)
+app.include_router(resume_analyzer.router)
 
 
