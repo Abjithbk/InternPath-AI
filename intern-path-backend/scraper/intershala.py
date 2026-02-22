@@ -3,7 +3,7 @@ import random
 import gc
 import re
 from datetime import date, timedelta, datetime
-from patchright.async_api import async_playwright
+from playwright.async_api import async_playwright
 from sqlalchemy.orm import Session
 from database import models
 
@@ -12,8 +12,6 @@ BROWSER_ARGS = [
     "--no-sandbox",
     "--disable-setuid-sandbox",
     "--disable-dev-shm-usage",
-    "--disable-blink-features=AutomationControlled",
-    "--disable-gl-drawing-for-tests",
     "--disable-gpu",
      "--single-process",    # ← add this
     "--no-zygote",
