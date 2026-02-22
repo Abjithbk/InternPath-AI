@@ -116,9 +116,9 @@ async def fetch_details(context, link):
     return backup_skills, apply_date
 
 # --- MAIN SCRAPER ---
-async def scrape_internshala(db: Session, limit: int = 15):
+async def scrape_internshala(db: Session, limit: int = 5):
     
-    keywords = ["python","web development","data science","embedded systems"]
+    keywords = ["python"]
     total_saved = 0
 
     async with async_playwright() as p:
