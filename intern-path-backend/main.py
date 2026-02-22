@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # Local imports (Works when Root Directory = backend)
 from database.database import engine
 from database import models
-from routers import auth ,internship,user_profile,automation,chatbot,fake_detector,resume_analyzer
+from routers import auth ,internship,user_profile,automation,chatbot,fake_detector,resume_analyzer,scoring
 
 
 # Create Tables
@@ -38,5 +38,6 @@ app.include_router(automation.router)
 app.include_router(chatbot.router)
 app.include_router(fake_detector.router)
 app.include_router(resume_analyzer.router)
+app.include_router(scoring.router)
 
 
