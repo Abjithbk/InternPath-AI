@@ -15,6 +15,8 @@ BROWSER_ARGS = [
     "--disable-blink-features=AutomationControlled",
     "--disable-gl-drawing-for-tests",
     "--disable-gpu",
+     "--single-process",    # ← add this
+    "--no-zygote",
 ]
 
 USER_AGENTS = [
@@ -120,7 +122,7 @@ async def scrape_internshala(db: Session, limit: int = 15):
     total_saved = 0
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True, args=BROWSER_ARGS)
+        browser = await p.chromium.launch(headless=True, args=BROWSER_ARGS,timeout=120000)
         context = await browser.new_context(user_agent=random.choice(USER_AGENTS))
 
         for keyword in keywords:

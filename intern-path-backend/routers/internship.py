@@ -3,6 +3,7 @@ import asyncio
 from fastapi import APIRouter, Depends, HTTPException,Query
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from fastapi import BackgroundTasks
 
 from database import models, database
 from scraper import intershala as scraper
@@ -52,11 +53,12 @@ async def get_internship_details(db: Session = Depends(get_db)):
 
 # ---  MAIN SEARCH ENDPOINT ---
 @router.get("/scrape")
-async def get_jobs(db: Session = Depends(get_db)):
+async def get_jobs(background_tasks:BackgroundTasks,db: Session = Depends(get_db)):
     try:
         # No query needed — scraper will handle predefined keywords internally
-        total_saved = await scraper.scrape_internshala(db, limit=10)
-        return {"source": "live", "total_saved": total_saved}
+        background_tasks.add_task(scraper.scrape_internshala, db, limit=10)
+        return {"message": "Scraping started in background. Check logs for progress."}
+        
     except Exception as e:
         print(f" Scraper error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
