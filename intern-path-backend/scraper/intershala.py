@@ -3,7 +3,7 @@ import random
 import gc
 import re
 from datetime import date, timedelta, datetime
-from playwright.async_api import async_playwright
+from patchright.async_api import async_playwright
 from sqlalchemy.orm import Session
 from database import models
 
