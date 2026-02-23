@@ -1,10 +1,11 @@
 from langgraph.graph import StateGraph, END
 from typing import TypedDict
-from langchain_ollama import ChatOllama
+from langchain_groq import ChatGroq
 from .retriever import get_retriever
 from .tools import web_search, should_use_web_search
 from database.models import User, UserProfile
 import traceback
+import os
 
 class AgentState(TypedDict):
     input: str
@@ -27,21 +28,19 @@ def truncate_history(history: str, max_exchanges: int = 5) -> str:
 
 def create_graph():
     # Main LLM for responses
-    llm = ChatOllama(
-        model="llama3.2",
+    llm = ChatGroq(
+        model="llama-3.1-8b-instant",
         temperature=0.1,  # Lower for more factual responses
-        num_predict=400,
-        num_ctx=4096,
-        repeat_penalty=1.3,
-        top_p=0.9,
-        top_k=40
+        max_tokens=400,
+        groq_api_key = os.getenv("GROQ_API_KEY")
     )
     
     # Verification LLM
-    verification_llm = ChatOllama(
-        model="llama3.2",
+    verification_llm = ChatGroq(
+        model="llama-3.1-8b-instant",
         temperature=0.0,  # Zero for strict verification
-        num_predict=200
+        max_tokens=200,
+        groq_api_key = os.getenv("GROQ_API_KEY")
     )
     
     retriever = get_retriever()
