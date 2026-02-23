@@ -127,8 +127,8 @@ async def scrape_internshala(keyword: str, db: Session, limit: int = 8):
 
         try:
             url = f"https://internshala.com/internships/keywords-{clean_term.replace(' ', '-')}"
-            await page.goto(url, timeout=25000)
-            await page.wait_for_selector(".individual_internship", timeout=10000)
+            await page.goto(url, timeout=30000,wait_until="domcontentloaded")
+            await page.wait_for_selector(".individual_internship", timeout=15000,state="attached")
 
             cards = await page.query_selector_all(".individual_internship")
 
