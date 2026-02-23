@@ -78,7 +78,7 @@ const Dashboard = () => {
     }
   };
   return (
-    <div className="min-h-screen bg-[#EEF2FF] px-6 py-10">
+    <div className="min-h-screen bg-[#F5F7FB] px-6 py-10">
       <div className="max-w-7xl mx-auto space-y-10">
         <MovingNotice />
 

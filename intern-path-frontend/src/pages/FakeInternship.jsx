@@ -64,7 +64,7 @@ const FakeInternship = () => {
   const styles = getColorStyles();
 
   return (
-    <div className="min-h-screen bg-[#EEF2FF] pt-24 px-6">
+    <div className="min-h-screen bg-[#F5F7FB] pt-24 px-6">
       <div className="max-w-5xl mx-auto space-y-10">
 
         {/* HEADER */}
