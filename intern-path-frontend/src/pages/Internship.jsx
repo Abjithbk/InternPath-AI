@@ -12,73 +12,140 @@ const Internship = () => {
   const [recommended,setRecommended] = useState([])
   const [matchMap,setMatchMap] = useState({})
   const [maxMatch, setMaxMatch] = useState(0)
+  const [loading,setLoading] = useState(true)
 
 
   useEffect(() => {
-
-    const fetchRecommendations = async () => {
-  try {
-    const res = await api.get("/jobs/recommendation")
-    const recommendedData = res.data
-    console.log(recommendedData)
-
-    // Create match map
-    const map = {}
-    recommendedData.forEach((item) => {
-      map[item.id] = item.match_percentage
-    })
-    setMatchMap(map)
-
-    // Calculate maxMatch from all recommendations
-    const maxMatchValue = recommendedData.length > 0
-      ? Math.max(...recommendedData.map(item => item.match_percentage))
-      : 0
-    setMaxMatch(maxMatchValue)
-
-    // Sort by match and take top 5
-    const top5 = recommendedData
-      .sort((a, b) => b.match_percentage - a.match_percentage)
-      .slice(0, 5)
-
-    setRecommended(top5)
-
-  } catch (err) {
-    console.log(err)
-  }
-}
-
-    const internshipDetails = async () => {
+    const loadInitialData =  async () => {
       try {
-        const res = await api.get("/jobs/")
-        setInternships(res.data.data)
-        console.log(res.data.data);
-        
-        setAllInternships(res.data.data)
-      } catch (err) {
+        setLoading(true)
+
+        const [jobsRes,recRes] = await Promise.all([
+          api.get("/jobs/"),
+          api.get("/jobs/recommendation")
+        ])
+
+        setInternships(jobsRes.data.data)
+        setAllInternships(jobsRes.data.data);
+
+        const recommendedData = recRes.data
+
+        const map = {}
+        recommendedData.forEach((item) => {
+          map[item.id] = item.match_percentage
+        })
+         setMatchMap(map)
+
+        const maxMatchValue =
+          recommendedData.length > 0
+            ? Math.max(...recommendedData.map(item => item.match_percentage))
+            : 0
+
+        setMaxMatch(maxMatchValue)
+
+        const top5 = recommendedData
+          .sort((a, b) => b.match_percentage - a.match_percentage)
+          .slice(0, 5)
+
+        setRecommended(top5)
+      }
+      catch(err) {
         console.log(err)
       }
+      finally {
+        setLoading(false)
+      }
     }
+    loadInitialData()
+  },[])
 
-    const fetchSearch = async () => {
-      try {
+  useEffect(() => {
+   const delayDebounce = setTimeout(async () => {
+    try {
         if (search.trim() === "") {
           setInternships(allInternships)
           return
         }
+
         const res = await api.get("/jobs/search", {
           params: { q: search },
         })
+
         setInternships(res.data.data)
+
       } catch (err) {
         console.log(err)
       }
-    }
 
-    internshipDetails()
-    fetchRecommendations()
-    fetchSearch()
+   },400)
+   return () => clearTimeout(delayDebounce)
+  },[search,allInternships])
+
+//   useEffect(() => {
+
+//     const fetchRecommendations = async () => {
+//   try {
+//     const res = await api.get("/jobs/recommendation")
+//     const recommendedData = res.data
+//     console.log(recommendedData)
+
+//     // Create match map
+//     const map = {}
+//     recommendedData.forEach((item) => {
+//       map[item.id] = item.match_percentage
+//     })
+//     setMatchMap(map)
+
+//     // Calculate maxMatch from all recommendations
+//     const maxMatchValue = recommendedData.length > 0
+//       ? Math.max(...recommendedData.map(item => item.match_percentage))
+//       : 0
+//     setMaxMatch(maxMatchValue)
+
+//     // Sort by match and take top 5
+//     const top5 = recommendedData
+//       .sort((a, b) => b.match_percentage - a.match_percentage)
+//       .slice(0, 5)
+
+//     setRecommended(top5)
+
+//   } catch (err) {
+//     console.log(err)
+//   }
+// }
+
+//     const internshipDetails = async () => {
+//       try {
+//         const res = await api.get("/jobs/")
+//         setInternships(res.data.data)
+//         console.log(res.data.data);
+        
+//         setAllInternships(res.data.data)
+//       } catch (err) {
+//         console.log(err)
+//       }
+//     }
+
+//     const fetchSearch = async () => {
+//       try {
+//         if (search.trim() === "") {
+//           setInternships(allInternships)
+//           return
+//         }
+//         const res = await api.get("/jobs/search", {
+//           params: { q: search },
+//         })
+//         setInternships(res.data.data)
+//       } catch (err) {
+//         console.log(err)
+//       }
+//     }
+
+//     internshipDetails()
+//     fetchRecommendations()
+//     fetchSearch()
     
-  }, [search])
+//   }, [search])
 
   const fetchByDomain = async (selectedDomain) => {
     try {

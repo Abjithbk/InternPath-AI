@@ -58,7 +58,7 @@ export const UserProvider = ({ children }) => {
     localStorage.removeItem("access_token");
     setUser(null);
     setUserProfile(null);
-    navigate("/login");
+    navigate("/Login");
   };
 
   return (

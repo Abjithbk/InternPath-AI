@@ -40,7 +40,7 @@ class UserProfile(Base):
 
     id = Column(Integer,primary_key=True,index = True)
 
-    user_id = Column(Integer,ForeignKey("users.id"),unique=True)
+    user_id = Column(Integer,ForeignKey("users.id"),unique=True,index=True)
 
     year = Column(Integer)
     semester = Column(Integer)

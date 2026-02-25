@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from database.database import engine
 from database import models
 from routers import auth ,internship,user_profile,automation,chatbot,fake_detector,resume_analyzer,scoring
-
+from fastapi.middleware.gzip import GZipMiddleware
 
 # Create Tables
 models.Base.metadata.create_all(bind=engine)
@@ -29,6 +29,10 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+app.add_middleware(
+    GZipMiddleware,
+    minimum_size=1000
 )
 
 

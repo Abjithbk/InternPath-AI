@@ -3,12 +3,21 @@ import { useNavigate } from "react-router-dom";
 import { UserContext } from "../context/UserContext";
 import React from "react";
 const ProfileGate = ({ children }) => {
-  const { userProfile, loading } = useContext(UserContext);
+  const { user,userProfile, loading } = useContext(UserContext);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && userProfile === null) {
-      navigate("/profile-completion");
+    if (!loading) {
+      // If NOT logged in → go login
+      if (!user) {
+        navigate("/login");
+        return;
+      }
+
+      // If logged in but no profile → go profile completion
+      if (user && !userProfile) {
+        navigate("/profile-completion");
+      }
     }
   }, [loading, userProfile, navigate]);
 

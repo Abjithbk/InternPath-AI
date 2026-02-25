@@ -122,41 +122,63 @@ def search_internship(q : str = Query(None,description="Search keyword"),db:Sess
 
 @router.get("/recommendation")
 def recommend_internship(
-    db:Session = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    profile = db.query(models.UserProfile).filter(models.UserProfile.user_id == current_user.id).first()
+    profile = db.query(models.UserProfile)\
+        .filter(models.UserProfile.user_id == current_user.id)\
+        .first()
 
     if not profile:
-        return {
-            "error":"Profile not found"
-        }
-    
+        return {"error": "Profile not found"}
+
+    # Convert user skills only once
     user_skills = set(skill.strip().lower() for skill in profile.skills)
-    internships = db.query(models.Internship).all()
+
+    # Fetch only required columns (FASTER)
+    internships = db.query(
+        models.Internship.id,
+        models.Internship.title,
+        models.Internship.company,
+        models.Internship.duration,
+        models.Internship.location,
+        models.Internship.link,
+        models.Internship.skills,
+        models.Internship.stipend
+    ).all()
 
     recommendations = []
 
     for internship in internships:
         required_skills = set(skill.strip().lower() for skill in internship.skills.split(","))
+
+        if not required_skills:
+            continue
+
         match_count = len(user_skills & required_skills)
-        total_required = len(required_skills)
-        match_percentage = int((match_count/total_required) * 100) if total_required > 0 else 0
+        match_percentage = int((match_count / len(required_skills)) * 100)
 
-        skill_gap = list(required_skills - user_skills)
+        # 🔥 Only push if some match exists (major performance improvement)
+        if match_percentage > 0:
+            recommendations.append({
+                "id": internship.id,
+                "title": internship.title,
+                "company": internship.company,
+                "duration": internship.duration,
+                "location": internship.location,
+                "link": internship.link,
+                "skills": internship.skills,
+                "stipend": internship.stipend,
+                "match_percentage": match_percentage,
+                "skill_gap": list(required_skills - user_skills)
+            })
 
-        recommendations.append({
-            "id":internship.id,
-            "title":internship.title,
-            "company":internship.company,
-            "duration":internship.duration,
-            "location":internship.location,
-            "link":internship.link,
-            "skills":internship.skills,
-            "stipend":internship.stipend,
-            "match_percentage":match_percentage,
-            "skill_gap":skill_gap
-        })
+    # 🔥 Sort only matched ones
+    recommendations = sorted(
+        recommendations,
+        key=lambda x: x["match_percentage"],
+        reverse=True
+    )
 
-    recommendations.sort(key = lambda x:x["match_percentage"],reverse=True)
-    return recommendations
+    # 🔥 Limit results (VERY IMPORTANT)
+    return recommendations[:20]
