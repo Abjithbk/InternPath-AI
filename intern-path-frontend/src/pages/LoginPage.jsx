@@ -4,12 +4,16 @@ import { useNavigate } from "react-router-dom";
 import api from "../axios";
 import { toast } from "react-toastify";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
+import { useContext } from "react";
+import { UserContext } from "../context/UserContext";
+import { jwtDecode } from "jwt-decode";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+  const { setUser, setUserProfile } = useContext(UserContext);
 
   const navigate = useNavigate();
 
@@ -17,61 +21,56 @@ const LoginPage = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const checkProfile = async () => {
-    try {
-      const res = await api.get("/profile/");
-      const profile = res.data;
-      console.log(profile);
+ const handleLogin = async (e) => {
+  e.preventDefault();
 
-      // If profile exists, redirect to home
-      if (profile && Object.keys(profile).length > 0) {
-        navigate("/");
-      } else {
-        navigate("/profile-completion");
-      }
-    } catch (err) {
-      console.log("No profile found, redirecting to profile completion");
-      navigate("/profile-completion");
+  try {
+    const res = await api.post("/login", formData);
+    const token = res.data?.access_token;
+
+    if (!token) {
+      toast.error("Login failed");
+      return;
     }
-  };
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await api.post("/login", formData);
+    localStorage.setItem("access_token", token);
 
-      // If backend returns token
-      if (res.data?.access_token) {
-        localStorage.setItem("access_token", res.data.access_token);
-      }
+    toast.success("Login successful 🎉");
 
-      toast.success("Login successful 🎉");
-      
-      // Check if user has profile
-      await checkProfile();
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message ||
-        error.response?.data?.detail ||
-        "Invalid email or password"
-      );
+    // Just reload app state
+    window.location.href = "/";
+
+  } catch (error) {
+    toast.error(
+      error.response?.data?.message ||
+      error.response?.data?.detail ||
+      "Invalid email or password"
+    );
+  }
+};
+
+ const handleGoogleLogin = async (response) => {
+  try {
+    const googleToken = response.credential;
+
+    const res = await api.post("/google-auth", { token: googleToken });
+    const accessToken = res.data?.access_token;
+
+    if (!accessToken) {
+      toast.error("Google login failed");
+      return;
     }
-  };
 
-  const handleGoogleLogin = async (response) => {
-    try {
-      const token = response.credential;
-      const res = await api.post("/google-auth", { token });
+    localStorage.setItem("access_token", accessToken);
 
-      localStorage.setItem("access_token", res.data.access_token);
-      toast.success("Google Login Success!");
-      
-      // Check if user has profile
-      await checkProfile();
-    } catch (err) {
-      toast.error("Google login failed!");
-    }
-  };
+    toast.success("Google Login Success 🎉");
+
+    window.location.href = "/";
+
+  } catch (err) {
+    toast.error("Google login failed!");
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">

@@ -14,6 +14,7 @@ import ResumeAssessment from "./pages/ResumeAssessment";
 import FakeInternship from "./pages/FakeInternship";
 import CompleteProfile from "./pages/CompleteProfile";
 import { UserProvider } from "./context/UserContext.jsx";
+import ProfileGate from "./component/ProfileGate.jsx";
 function App() {
   return (
     <div>
@@ -26,8 +27,10 @@ function App() {
             <Route path="/resume" element={<ResumeAssessment />} />
             <Route path="fake-internship" element={<FakeInternship/>} />
             </Route>
+            <Route path="/" element={<ProfileGate>
+                                        <HeroSection/>
+                                     </ProfileGate>} />
             <Route path="/Internship/:id" element={<InternshipDetails/>} />
-            <Route path="/" element={<HeroSection/>} />
             <Route path="/Signup" element={<SignupPage/>} />
             <Route path="/Login" element={<LoginPage />} />
             <Route path="/Chatbot" element={<Chatbot/>} />

@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import api from "../axios";
-import { useContext } from "react";
-import { UserContext } from "../context/UserContext.jsx";
 import { toast } from "react-toastify";
 import MovingNotice from "../component/MovingNotice.jsx";
+import { useContext } from "react";
+import { UserContext } from "../context/UserContext.jsx";
+
 
 const Dashboard = () => {
-  const [profile, setProfile] = useState(null);
   const [newSkill, setNewSkill] = useState("");
   const [showSkillInput, setShowSkillInput] = useState(false);
 
@@ -19,22 +19,14 @@ const Dashboard = () => {
   const [showProjectForm, setShowProjectForm] = useState(false);
 
   const [techInput, setTechInput] = useState("");
-  const { user, loading } = useContext(UserContext);
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const res = await api.get("/profile/");
-        console.log(res.data);
-        setProfile(res.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchUserProfile();
-  }, []);
-  if (!profile) {
-    return <div className="p-10">Loading...</div>;
-  }
+const { user, userProfile, setUserProfile, loading } = useContext(UserContext);
+ if (loading || !userProfile) {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="h-10 w-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  );
+}
 
   const handleAddSkill = async () => {
     if (!newSkill.trim()) return;
@@ -43,7 +35,7 @@ const Dashboard = () => {
       const res = await api.put("/profile/", {
         skills: [newSkill],
       });
-      setProfile((prev) => ({ ...prev, skills: [...prev.skills, newSkill] }));
+      setUserProfile((prev) => ({ ...prev, skills: [...prev.skills, newSkill] }));
       setNewSkill("");
       setShowSkillInput(false);
       toast.success("New skills added successfully");
@@ -65,7 +57,7 @@ const Dashboard = () => {
 
     try {
       await api.put("/profile/", { projects: [newProject] });
-      setProfile((prev) => ({
+      setUserProfile((prev) => ({
         ...prev,
         projects: [...prev.projects, newProject],
       }));
@@ -93,7 +85,7 @@ const Dashboard = () => {
             <div>
               <h2 className="text-3xl font-semibold">{user?.name || "_"}</h2>
               <p className="text-indigo-100 mt-1">
-                {profile.year}rd Year &nbsp; • &nbsp; {profile.department}
+                {userProfile.year}rd Year &nbsp; • &nbsp; {userProfile.department}
               </p>
             </div>
           </div>
@@ -107,7 +99,7 @@ const Dashboard = () => {
               <h3 className="text-4xl font-bold text-indigo-600">82%</h3>
             </div>
             {/* <button className="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2 rounded-lg font-medium transition">
-              Edit Profile
+              Edit UserProfile
             </button> */}
           </div>
         </div>
@@ -132,7 +124,7 @@ const Dashboard = () => {
                   💡
                 </div>
                 <p className="text-gray-700">
-                  <span className="font-semibold">{profile.skills.length}</span>{" "}
+                  <span className="font-semibold">{userProfile.skills.length}</span>{" "}
                   Skills added
                 </p>
               </div>
@@ -144,9 +136,9 @@ const Dashboard = () => {
                 Academic Details
               </h3>
 
-              <p className="text-gray-700">Semester: {profile.semester}</p>
-              <p className="text-gray-700">College: {profile.college}</p>
-              <p className="text-gray-700">CGPA: {profile.cgpa}</p>
+              <p className="text-gray-700">Semester: {userProfile.semester}</p>
+              <p className="text-gray-700">College: {userProfile.college}</p>
+              <p className="text-gray-700">CGPA: {userProfile.cgpa}</p>
             </div>
           </div>
 
@@ -190,7 +182,7 @@ const Dashboard = () => {
               )}
 
               <div className="flex flex-wrap gap-3">
-                {profile.skills.map((skill) => (
+                {userProfile.skills.map((skill) => (
                   <span
                     key={skill}
                     className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
@@ -288,7 +280,7 @@ const Dashboard = () => {
               )}
 
               <div className="space-y-4">
-                {(profile.projects || []).map((project, index) => (
+                {(userProfile.projects || []).map((project, index) => (
                   <div
                     key={index}
                     className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
