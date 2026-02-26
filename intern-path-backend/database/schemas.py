@@ -33,8 +33,6 @@ class InternshipOut(BaseModel):
 class UserProfileCreate(BaseModel):
     year : Optional[int] = None
     semester: Optional[int] = None
-    college: Optional[str] = None
-    department:Optional[str] = None
     cgpa: float | None = None
     skills: Optional[List[str]] = []
     projects:Optional[List[Dict]] = []
@@ -42,8 +40,6 @@ class UserProfileCreate(BaseModel):
 class UserProfileUpdate(BaseModel):
     year: Optional[int] = None
     semester: Optional[int] = None
-    college: Optional[str] = None
-    department: Optional[str] = None
     cgpa: float | None = None
     skills: Optional[List[str]] = None
     projects: Optional[List[Dict]] = None

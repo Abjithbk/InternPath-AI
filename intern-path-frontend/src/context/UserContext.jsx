@@ -38,8 +38,18 @@ export const UserProvider = ({ children }) => {
         });
 
         // ✅ Fetch profile ONLY ONCE
-        const res = await api.get("/profile/");
-        setUserProfile(res.data);
+        try {
+          const res = await api.get("/profile/");
+          setUserProfile(res.data);
+        }
+        catch(profileErr) {
+          if(profileErr.response?.status === 404) {
+            setUserProfile(null);
+          }
+          else {
+            throw profileErr
+          }
+        }
 
       } catch (err) {
         console.log("Auth error:", err);
