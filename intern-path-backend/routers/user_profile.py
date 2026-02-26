@@ -36,8 +36,8 @@ def create_user_profile(
         user_id = current_user.id,
         year=profile.year,
         semester=profile.semester,
-        college=profile.college,
-        department=profile.department,
+        college="College of Engineering Chengannur",
+        department="CSE",
         cgpa=profile.cgpa,
         skills=profile.skills or [],
         projects=profile.projects or []

@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from "react";
-import api from "../axios"
-import {useNavigate} from "react-router-dom"
+import React, { useEffect, useState,useContext } from "react";
+import api from "../axios";
+import {useNavigate} from "react-router-dom";
 import { toast } from "react-toastify";
+import { UserContext } from "../context/UserContext";
 const CompleteProfile = () => {
     const navigate = useNavigate()
+     const { userProfile, loading, setUserProfile } = useContext(UserContext);
   const [formData, setFormData] = useState({
     year: "",
     semester: "",
@@ -17,24 +19,10 @@ const CompleteProfile = () => {
   const [skillInput, setSkillInput] = useState("");
 
   useEffect(() => {
-    const checkProfile = async () => {
-      try {
-        const res = await api.get("/profile/");
-        const profile = res.data;
-        console.log(profile)
-
-        // If profile exists, redirect to HeroSection
-        if (profile && Object.keys(profile).length > 0) {
-          navigate("/"); // change "/hero" to your HeroSection route
-        }
-      } catch (err) {
-        console.log("No profile found, stay on this page");
-        // If API returns 404, do nothing — user fills profile
-      }
-    };
-
-    checkProfile();
-  },[navigate])
+    if (!loading && userProfile) {
+      navigate("/")
+    }
+  },[navigate,loading,userProfile])
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -73,15 +61,14 @@ const CompleteProfile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-        await api.post("/profile/",{
+      const res =  await api.post("/profile/",{
             year:Number(formData.year),
             semester:Number(formData.semester),
-            college:formData.college,
-            department:formData.department,
             cgpa:Number(formData.cgpa),
             skills:formData.skills,
             projects:formData.projects
         });
+        setUserProfile(res.data)
 
         navigate("/dashboard")
     }
@@ -139,16 +126,16 @@ const CompleteProfile = () => {
             <input
               type="text"
               name="college"
-              value={formData.college}
-              onChange={handleChange}
+              value={userProfile?.college || ""}
+              readOnly
               placeholder="College"
               className="input"
             />
 
             <select
                 name="department"
-                value={formData.department}
-                onChange={handleChange}
+                value={userProfile?.department|| ""}
+                disabled
                 className="input"
               >
                 <option value="">Select Department</option>

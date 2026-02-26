@@ -231,44 +231,8 @@ const { user, userProfile, setUserProfile, loading } = useContext(UserContext);
                     }
                     className="border border-gray-300 px-3 py-1 rounded-lg w-full"
                   />
-                  <input
-                    type="text"
-                    placeholder="Role"
-                    value={newProject.role}
-                    onChange={(e) =>
-                      setNewProject({ ...newProject, role: e.target.value })
-                    }
-                    className="border border-gray-300 px-3 py-1 rounded-lg w-full"
-                  />
 
-                  {/* Tech stack input */}
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Add tech"
-                      value={techInput}
-                      onChange={(e) => setTechInput(e.target.value)}
-                      className="border border-gray-300 px-3 py-1 rounded-lg w-full"
-                    />
-                    <button
-                      onClick={handleAddTech}
-                      className="bg-indigo-600 text-white px-4 py-1 rounded-lg"
-                    >
-                      Add Tech
-                    </button>
-                  </div>
-
-                  {/* Show current tech stack */}
-                  <div className="flex flex-wrap gap-2">
-                    {newProject.tech_stack.map((tech, i) => (
-                      <span
-                        key={i}
-                        className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-sm"
-                      >
-                        {tech}
-                      </span>
-                    ))}
-                  </div>
+                  
 
                   <button
                     onClick={handleAddProject}
@@ -287,25 +251,8 @@ const { user, userProfile, setUserProfile, loading } = useContext(UserContext);
                   >
                     <h3 className="font-semibold text-lg">{project.title}</h3>
                     <p className="text-gray-600 mt-1">{project.description}</p>
-                    <p className="mt-3 text-gray-700">
-                      <span className="font-semibold">Role:</span>{" "}
-                      {project.role}
-                    </p>
-                    <div className="mt-2">
-                      <span className="font-semibold text-gray-700">
-                        Tech Stack:
-                      </span>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {(project.tech_stack || []).map((tech, i) => (
-                          <span
-                            key={i}
-                            className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-sm"
-                          >
-                            {tech}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
+                   
+                    
                   </div>
                 ))}
               </div>

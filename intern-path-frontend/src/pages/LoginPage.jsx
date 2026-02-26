@@ -3,10 +3,9 @@ import { FcGoogle } from "react-icons/fc";
 import { useNavigate } from "react-router-dom";
 import api from "../axios";
 import { toast } from "react-toastify";
-import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
+import { GoogleLogin } from "@react-oauth/google";
 import { useContext } from "react";
 import { UserContext } from "../context/UserContext";
-import { jwtDecode } from "jwt-decode";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -80,7 +79,7 @@ const LoginPage = () => {
           Welcome Back to InternPath
         </h1>
 
-        <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+        
           <GoogleLogin
             onSuccess={handleGoogleLogin}
             onError={() => toast.error("Google Login Failed")}
@@ -95,7 +94,7 @@ const LoginPage = () => {
               </button>
             )}
           />
-        </GoogleOAuthProvider>
+        
 
         {/* OR Divider */}
         <div className="flex items-center my-8">

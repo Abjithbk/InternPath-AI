@@ -7,19 +7,24 @@ const ProfileGate = ({ children }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading) {
-      // If NOT logged in → go login
-      if (!user) {
-        navigate("/login");
-        return;
-      }
+    if (loading) return;
 
-      // If logged in but no profile → go profile completion
-      if (user && !userProfile) {
+    // Not logged in
+    if (!user) {
+      if (location.pathname !== "/login") {
+        navigate("/login");
+      }
+      return;
+    }
+
+    // Logged in but NO profile
+    if (user && userProfile === null) {
+      if (location.pathname !== "/profile-completion") {
         navigate("/profile-completion");
       }
+      return;
     }
-  }, [loading, userProfile, navigate]);
+  }, [loading, userProfile, navigate,user]);
 
   if (loading) {
     return (
