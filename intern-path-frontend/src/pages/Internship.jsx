@@ -14,7 +14,7 @@ const Internship = () => {
   const [maxMatch, setMaxMatch] = useState(0)
   const [loading,setLoading] = useState(true)
 
-
+  const isSearching = search.trim() != ""
   useEffect(() => {
     const loadInitialData =  async () => {
       try {
@@ -197,7 +197,15 @@ const Internship = () => {
             Filters
           </button>
         </div>
-        {recommended.length > 0 && (
+        {loading && (
+          <div className="flex justify-center items-center py-20">
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full border-4 border-indigo-200"></div>
+              <div className="w-16 h-16 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin absolute top-0 left-0"></div>
+            </div>
+          </div>
+        )}
+        {!loading && !isSearching && recommended.length > 0 && (
   <div className="mb-14">
     <h2 className="text-xl font-semibold text-[#3C3F8C] mb-5">
       Recommended for you
@@ -223,11 +231,15 @@ const Internship = () => {
 
 
         {/* Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {
+          !loading && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {internships.map((item, index) => (
             <InternshipCard key={index} {...item} match={matchMap[item.id] ?? 0} maxMatch={maxMatch} />
           ))}
         </div>
+          )
+        }
       </div>
 
       {/* Filter Modal */}
