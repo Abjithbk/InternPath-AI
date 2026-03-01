@@ -26,7 +26,7 @@ const LoginPage = () => {
   setLoading(true)
 
   try {
-    const res = await api.post("/Login", formData);
+    const res = await api.post("/login", formData);
     const token = res.data?.access_token;
 
     if (!token) {
