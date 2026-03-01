@@ -21,11 +21,10 @@ def get_db():
 graph = create_graph()
 
 @router.post("/chat",response_model=ChatResponse)
-def chat(req : ChatRequest,db:Session = Depends(get_db),current_user = Depends(get_current_user)):
+async def chat(req : ChatRequest,db:Session = Depends(get_db),current_user = Depends(get_current_user)):
 
     try:
         user_id = current_user.id
-        print(user_id)
         if not req.session_id:
             session = ChatSession(user_id = user_id)
             db.add(session)
@@ -55,14 +54,16 @@ def chat(req : ChatRequest,db:Session = Depends(get_db),current_user = Depends(g
 
         messages = db.query(ChatMessage).filter(
             ChatMessage.session_id == session.id
-        ).order_by(ChatMessage.timestamp).all()
+        ).order_by(ChatMessage.timestamp.desc()).limit(6).all()
 
-        history_text = ""
+        messages = list(reversed(messages))
 
-        for msg in messages[:-1]:
-            history_text+=f"{msg.role.upper()} : {msg.content}\n"
+        history_text = "\n".join(
+            f"{msg.role.upper()}: {msg.content}"
+            for msg in messages[:-1]
+        )
         
-        result = graph.invoke({
+        result = await graph.ainvoke({
             "input":req.message,
             "history":history_text,
             "user_id":user_id
@@ -128,6 +129,7 @@ def get_session_messages(
     messages = db.query(ChatMessage).filter(
         ChatMessage.session_id == session_id
     ).order_by(ChatMessage.timestamp).all()
+    
 
     return messages
 
