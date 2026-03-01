@@ -119,6 +119,7 @@ const LoginPage = () => {
               onChange={handleChange}
               type="email"
               required
+              autoComplete="off"
               className="w-full mt-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
@@ -132,6 +133,7 @@ const LoginPage = () => {
               onChange={handleChange}
               type="password"
               required
+              autoComplete="off"
               className="w-full mt-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>

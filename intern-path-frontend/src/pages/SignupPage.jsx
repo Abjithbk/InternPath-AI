@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { FcGoogle } from "react-icons/fc";
 import { useNavigate } from 'react-router-dom';
 import api from '../axios'
 import {toast} from 'react-toastify'
@@ -10,6 +9,7 @@ const SignupPage = () => {
     email:'',
     password:''
   })
+  const [loading,setLoading] = useState(false)
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -17,14 +17,24 @@ const SignupPage = () => {
     }
     const handleSignup = async (e) => {
        e.preventDefault();
+       setLoading(true)
        try {
-         await api.post("/signup",formData)
-         
+        const res = await api.post("/signup",formData)
+        const token = res.data.access_token;
+
+        if (!token) {
+              toast.error("Login failed");
+              return;
+            }
+        localStorage.setItem("access_token",token)
          toast.success("Signup successfully..")
-        navigate("/Login");
+        navigate("/");
        }
        catch(error) {
          toast.error(error.response?.data?.message || "Something went wrong..")
+       }
+       finally {
+        setLoading(false)
        }
     };
     
@@ -49,6 +59,7 @@ const SignupPage = () => {
               value={formData.first_name}
               onChange={handleChange}
               required
+              autoComplete='off'
                 type="text"
                 className="w-full mt-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
@@ -61,6 +72,7 @@ const SignupPage = () => {
               value={formData.second_name}
               onChange={handleChange}
               required
+              autoComplete='off'
                 type="text"
                 className="w-full mt-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
@@ -75,6 +87,7 @@ const SignupPage = () => {
             value={formData.email}
             onChange={handleChange}
             required
+            autoComplete='off'
               type="email"
               className="w-full mt-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
@@ -88,6 +101,7 @@ const SignupPage = () => {
             value={formData.password}
             onChange={handleChange}
             required
+            autoComplete='off'
               type="password"
               className="w-full mt-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
@@ -96,9 +110,12 @@ const SignupPage = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition"
+            disabled={loading}
+           className={`w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition flex justify-center items-center ${
+              loading ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
-            Create Account
+           {loading ? 'Creating...' : 'Create Account'}
           </button>
         </form>
         <p className="text-center text-sm text-gray-600 mt-6">
