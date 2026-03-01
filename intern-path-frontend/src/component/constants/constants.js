@@ -1,1 +1,1 @@
-export const BASEURL = "https://intern-path-ai-teal.vercel.app"
+export const BASEURL = "https://internpath-ai-t5j2.onrender.com"

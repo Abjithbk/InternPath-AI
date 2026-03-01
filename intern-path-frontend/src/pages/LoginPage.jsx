@@ -13,6 +13,7 @@ const LoginPage = () => {
     password: "",
   });
   const { setUser, setUserProfile } = useContext(UserContext);
+  const [loading,setLoading] = useState(false)
 
   const navigate = useNavigate();
 
@@ -22,9 +23,10 @@ const LoginPage = () => {
 
  const handleLogin = async (e) => {
   e.preventDefault();
+  setLoading(true)
 
   try {
-    const res = await api.post("/login", formData);
+    const res = await api.post("/Login", formData);
     const token = res.data?.access_token;
 
     if (!token) {
@@ -45,6 +47,9 @@ const LoginPage = () => {
       error.response?.data?.detail ||
       "Invalid email or password"
     );
+  }
+  finally {
+    setLoading(false)
   }
 };
 
@@ -134,9 +139,18 @@ const LoginPage = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition"
+            disabled={loading}
+            className={`w-full py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2
+            ${loading 
+              ? "bg-indigo-400 cursor-not-allowed text-white" 
+              : "bg-indigo-600 hover:bg-indigo-700 text-white"
+            }`}
           >
-            Login
+            {
+              loading && (
+    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>)
+            }
+            {loading ? "Logging in...": "Login"}
           </button>
         </form>
 
