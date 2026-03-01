@@ -18,9 +18,9 @@ def score_user(user_id: int, db: Session = Depends(get_db)):
 
     row = db.execute(
         text("""
-            SELECT college, course, cgpa, skills, projects
+            SELECT college, cgpa, skills, projects
             FROM userprofile
-            WHERE id = :id
+            WHERE user_id = :id
         """),
         {"id": user_id}
     ).fetchone()
