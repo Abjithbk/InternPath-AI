@@ -48,6 +48,7 @@ const SignupPage = () => {
               name='first_name'
               value={formData.first_name}
               onChange={handleChange}
+              required
                 type="text"
                 className="w-full mt-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
@@ -59,6 +60,7 @@ const SignupPage = () => {
               name='second_name'
               value={formData.second_name}
               onChange={handleChange}
+              required
                 type="text"
                 className="w-full mt-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
@@ -72,6 +74,7 @@ const SignupPage = () => {
             name='email'
             value={formData.email}
             onChange={handleChange}
+            required
               type="email"
               className="w-full mt-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
@@ -84,6 +87,7 @@ const SignupPage = () => {
             name='password'
             value={formData.password}
             onChange={handleChange}
+            required
               type="password"
               className="w-full mt-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />

@@ -19,14 +19,47 @@ const Dashboard = () => {
   const [showProjectForm, setShowProjectForm] = useState(false);
 
   const [techInput, setTechInput] = useState("");
+  const [readinessData,setReadinessData] = useState(null);
+  const [showReadinessModal,setShowReadinessModal] = useState(false)
 const { user, userProfile, setUserProfile, loading } = useContext(UserContext);
- if (loading || !userProfile) {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="h-10 w-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-    </div>
-  );
-}
+  if (loading || !userProfile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="h-10 w-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+
+  useEffect(() => {
+    if(user?.id) {
+      fetchReadinessSilently();
+    }
+  },[user])
+
+  const fetchReadinessSilently = async () => {
+  try {
+    const res = await api.get(`/score/${user.id}`);
+    setReadinessData(res.data);
+  } catch (err) {
+    console.log("Readiness preload failed");
+  }
+};
+
+  const fetchReadiness = async () => {
+    setShowReadinessModal(true);
+    if(!readinessData) {
+
+      try {
+        const res = await api.get(`/score/${user.id}`);
+        setReadinessData(res.data);
+      }
+      catch(err) {
+        toast.error("Failed to fetch readiness score");
+      }
+    }
+  };
+
 
   const handleAddSkill = async () => {
     if (!newSkill.trim()) return;
@@ -66,7 +99,7 @@ const { user, userProfile, setUserProfile, loading } = useContext(UserContext);
       setShowProjectForm(false);
     } catch (err) {
       console.error(err);
-      alert("Failed to add project!");
+      
     }
   };
   return (
@@ -96,7 +129,7 @@ const { user, userProfile, setUserProfile, loading } = useContext(UserContext);
               <p className="text-sm text-gray-500">
                 Internship Readiness Score
               </p>
-              <h3 className="text-4xl font-bold text-indigo-600">82%</h3>
+              <h3 onClick={fetchReadiness} className="text-4xl font-bold text-indigo-600">{readinessData?.percentage_score || ""} %</h3>
             </div>
             {/* <button className="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2 rounded-lg font-medium transition">
               Edit UserProfile
@@ -260,6 +293,74 @@ const { user, userProfile, setUserProfile, loading } = useContext(UserContext);
           </div>
         </div>
       </div>
+      {showReadinessModal && readinessData && (
+  <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+    <div className="bg-white w-[90%] max-w-3xl rounded-2xl p-8 overflow-y-auto max-h-[90vh]">
+
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-indigo-600">
+          Internship Readiness Breakdown
+        </h2>
+        <button
+          onClick={() => setShowReadinessModal(false)}
+          className="text-gray-500 hover:text-red-500"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* SCORE BREAKDOWN */}
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div>Education Score: {readinessData.education_score}</div>
+        <div>Skills Score: {readinessData.skills_score}</div>
+        <div>Project Score: {readinessData.project_score}</div>
+        <div>Final Score: {readinessData.final_score}</div>
+        <div>Readiness Level: {readinessData.readiness_level}</div>
+      </div>
+
+      {/* GENERAL FEEDBACK */}
+      <h3 className="text-lg font-semibold mb-3">Feedback</h3>
+      <div className="space-y-4 mb-6">
+        {readinessData.feedback.map((item, index) => (
+          <div key={index} className="border p-4 rounded-lg">
+            <p className="font-semibold">
+              {item.area.toUpperCase()} ({item.severity})
+            </p>
+            <p className="text-gray-600">{item.summary}</p>
+            <ul className="list-disc ml-6 mt-2 text-sm text-gray-600">
+              {item.reasons.map((reason, i) => (
+                <li key={i}>{reason}</li>
+              ))}
+            </ul>
+            <p className="mt-2 text-indigo-600 font-medium">
+              Action: {item.action}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* PROJECT FEEDBACK */}
+      <h3 className="text-lg font-semibold mb-3">Project Feedback</h3>
+      <div className="space-y-4">
+        {readinessData.project_feedback.map((proj, index) => (
+          <div key={index} className="border p-4 rounded-lg">
+            <p className="font-semibold">{proj.project}</p>
+            <p className="text-red-500">{proj.severity}</p>
+            <ul className="list-disc ml-6 mt-2 text-sm text-gray-600">
+              {proj.issues.map((issue, i) => (
+                <li key={i}>{issue}</li>
+              ))}
+            </ul>
+            <p className="mt-2 text-indigo-600 font-medium">
+              Action: {proj.action}
+            </p>
+          </div>
+        ))}
+      </div>
+
+    </div>
+  </div>
+)}
     </div>
   );
 };
