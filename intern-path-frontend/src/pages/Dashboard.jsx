@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import MovingNotice from "../component/MovingNotice.jsx";
 import { useContext } from "react";
 import { UserContext } from "../context/UserContext.jsx";
+import { Send, TrendingUp } from "lucide-react";
 
 
 const Dashboard = () => {
@@ -22,14 +23,6 @@ const Dashboard = () => {
   const [readinessData,setReadinessData] = useState(null);
   const [showReadinessModal,setShowReadinessModal] = useState(false)
 const { user, userProfile, setUserProfile, loading } = useContext(UserContext);
-  if (loading || !userProfile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="h-10 w-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
 
   useEffect(() => {
     if(user?.id) {
@@ -37,7 +30,7 @@ const { user, userProfile, setUserProfile, loading } = useContext(UserContext);
     }
   },[user])
 
-  const fetchReadinessSilently = async () => {
+ const fetchReadinessSilently = async () => {
   try {
     const res = await api.get(`/score/${user.id}`);
     setReadinessData(res.data);
@@ -45,6 +38,14 @@ const { user, userProfile, setUserProfile, loading } = useContext(UserContext);
     console.log("Readiness preload failed");
   }
 };
+
+  if (loading || !userProfile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="h-10 w-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   const fetchReadiness = async () => {
     setShowReadinessModal(true);
@@ -76,15 +77,6 @@ const { user, userProfile, setUserProfile, loading } = useContext(UserContext);
       toast.error("Failed to add skill!");
     }
   };
-  const handleAddTech = () => {
-    if (!techInput.trim()) return;
-    setNewProject((prev) => ({
-      ...prev,
-      tech_stack: [...prev.tech_stack, techInput],
-    }));
-    setTechInput("");
-  };
-
   const handleAddProject = async () => {
     if (!newProject.title || !newProject.description) return;
 
@@ -94,12 +86,12 @@ const { user, userProfile, setUserProfile, loading } = useContext(UserContext);
         ...prev,
         projects: [...prev.projects, newProject],
       }));
-      setNewProject({ title: "", description: "", role: "", tech_stack: [] });
+      setNewProject({ title: "", description: ""});
       setTechInput("");
       setShowProjectForm(false);
+      toast.success("Project added successfully!")
     } catch (err) {
-      console.error(err);
-      
+      toast.error(err?.response?.data?.message || "Failed to add project!")
     }
   };
   return (
@@ -129,7 +121,7 @@ const { user, userProfile, setUserProfile, loading } = useContext(UserContext);
               <p className="text-sm text-gray-500">
                 Internship Readiness Score
               </p>
-              <h3 onClick={fetchReadiness} className="text-4xl font-bold text-indigo-600">{readinessData?.percentage_score || ""} %</h3>
+              <h3 onClick={fetchReadiness} className="text-4xl font-bold text-indigo-600 cursor-pointer">{readinessData?.percentage_score || ""} %</h3>
             </div>
             {/* <button className="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2 rounded-lg font-medium transition">
               Edit UserProfile
@@ -145,7 +137,7 @@ const { user, userProfile, setUserProfile, loading } = useContext(UserContext);
             <div className="bg-white rounded-xl p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
-                  ✈️
+                  <Send/>
                 </div>
                 <p className="text-gray-700">
                   <span className="font-semibold">12</span> Applications sent
@@ -154,7 +146,7 @@ const { user, userProfile, setUserProfile, loading } = useContext(UserContext);
 
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
-                  💡
+                  <TrendingUp/>
                 </div>
                 <p className="text-gray-700">
                   <span className="font-semibold">{userProfile.skills.length}</span>{" "}

@@ -1,5 +1,6 @@
 from fastapi import APIRouter,Depends,HTTPException,status
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 
 from database import database
 from database.models import UserProfile
@@ -85,7 +86,9 @@ def update_user_profile(
     if "skills" in updated_data:
         db_profile.skills = list(set(db_profile.skills+updated_data["skills"]))
     if "projects" in updated_data:
-        db_profile.projects.extend(updated_data["projects"])
+        db_profile.projects= db_profile.projects + updated_data["projects"]
+        flag_modified(db_profile,"projects")
+
 
     for field,value in updated_data.items():
         if field not in ["skills","projects"]:

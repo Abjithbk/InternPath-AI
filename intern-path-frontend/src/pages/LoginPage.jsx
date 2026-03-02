@@ -7,6 +7,37 @@ import { GoogleLogin } from "@react-oauth/google";
 import { useContext } from "react";
 import { UserContext } from "../context/UserContext";
 
+
+const FloatingInput = ({ label, name, type = "text", value, onChange, required, autoComplete }) => {
+  const [focused, setFocused] = useState(false);
+  const isFloated = focused || value.length > 0;
+
+  return (
+    <div className="relative border border-gray-300 rounded-lg px-3 pt-3 pb-2 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-all">
+      <label
+        className={`absolute left-3 transition-all duration-200 pointer-events-none text-gray-600 ${
+          isFloated
+            ? '-top-2.5 text-xs bg-white px-1 text-indigo-500'
+            : 'top-3.5 text-sm'
+        }`}
+      >
+        {label}
+      </label>
+      <input
+        name={name}
+        type={type}
+        value={value}
+        onChange={onChange}
+        required={required}
+        autoComplete={autoComplete}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        className="w-full bg-transparent outline-none text-sm text-gray-800 pt-1"
+      />
+    </div>
+  );
+};
+
 const LoginPage = () => {
   const [formData, setFormData] = useState({
     email: "",
@@ -109,50 +140,44 @@ const LoginPage = () => {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleLogin} className="space-y-6">
+        <form onSubmit={handleLogin} className="space-y-5">
+
           {/* Email */}
-          <div>
-            <label className="text-sm text-gray-600">Email</label>
-            <input
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              type="email"
-              required
-              autoComplete="off"
-              className="w-full mt-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
+          <FloatingInput
+            label="Email"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            autoComplete="off"
+          />
 
           {/* Password */}
-          <div>
-            <label className="text-sm text-gray-600">Password</label>
-            <input
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              type="password"
-              required
-              autoComplete="off"
-              className="w-full mt-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
+          <FloatingInput
+            label="Password"
+            name="password"
+            type="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+            autoComplete="off"
+          />
 
           {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2
-            ${loading 
-              ? "bg-indigo-400 cursor-not-allowed text-white" 
-              : "bg-indigo-600 hover:bg-indigo-700 text-white"
+            className={`w-full py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
+              loading
+                ? "bg-indigo-400 cursor-not-allowed text-white"
+                : "bg-indigo-600 hover:bg-indigo-700 text-white"
             }`}
           >
-            {
-              loading && (
-    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>)
-            }
-            {loading ? "Logging in...": "Login"}
+            {loading && (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            )}
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 

@@ -65,7 +65,7 @@ const ResumeAssessment = () => {
         { name: "Education", value: 0, color: "bg-gray-300" },
         { name: "Formatting & ATS Friendly", value: 0, color: "bg-gray-300" },
       ];
-      const linguistic = result?.linguistic_features;
+      // const linguistic = result?.linguistic_features;
       const label = result ? scoreLabel(result.overall_score) : null;
 
   return (
@@ -178,7 +178,7 @@ const ResumeAssessment = () => {
             </div>
 
             {/* LINGUISTIC FEATURES */}
-            {linguistic && (
+            {/* {linguistic && (
               <div className="bg-white rounded-2xl p-8 shadow-sm">
                 <h2 className="text-lg font-semibold text-indigo-900 mb-6">
                   Linguistic Analysis
@@ -201,7 +201,7 @@ const ResumeAssessment = () => {
                   ))}
                 </div>
               </div>
-            )}
+            )} */}
           </>
         )}
       </div>

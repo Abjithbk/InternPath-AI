@@ -33,7 +33,7 @@ class Internship(Base):
     duration = Column(String(50))
     stipend = Column(String(100))
     skills = Column(String(200))
-    apply_by = Column(Date)
+    scraped_date = Column(Date)
 
 class UserProfile(Base):
     __tablename__ = "userprofile"

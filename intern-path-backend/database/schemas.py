@@ -25,7 +25,7 @@ class InternshipOut(BaseModel):
     duration: str
     stipend: str
     skills: str
-    apply_by: date
+    scraped_date: date
 
     class Config:
         from_attributes = True
