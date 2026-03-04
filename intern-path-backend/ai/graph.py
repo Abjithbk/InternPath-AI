@@ -47,7 +47,7 @@ def create_graph():
         groq_api_key=os.getenv("GROQ_API_KEY"),
     )
 
-    retriever = get_retriever()  # optimized singleton version
+    retriever = get_retriever()
 
     workflow = StateGraph(AgentState)
 
@@ -132,7 +132,7 @@ User Profile:
 
         # 🔹 RAG only if no web search
         rag_context = ""
-        if not web_context:
+        if not web_context and retriever is not None:
             try:
                 docs = retriever.invoke(user_input)
                 rag_context = "\n".join(

@@ -1,7 +1,18 @@
-import spacy
+import re
 
-# Load spaCy model
-nlp = spacy.load("en_core_web_sm")
+try:
+    import spacy
+except Exception:
+    spacy = None
+
+# Load spaCy model if available; fallback to lightweight heuristics otherwise
+if spacy is not None:
+    try:
+        nlp = spacy.load("en_core_web_sm")
+    except Exception:
+        nlp = None
+else:
+    nlp = None
 
 # Strong verbs list
 STRONG_VERBS = {
@@ -17,10 +28,53 @@ def normalize(value, min_val, max_val):
 
 
 def process_text(text: str):
-    return nlp(text)
+    if nlp is not None:
+        return nlp(text)
+    return text
 
 
 def extract_linguistic_features(doc):
+    if nlp is None or not hasattr(doc, "sents"):
+        words = re.findall(r"\b\w+\b", doc.lower())
+        total_tokens = len(words)
+        if total_tokens == 0:
+            return {
+                "noun_ratio": 0,
+                "verb_ratio": 0,
+                "strong_verb_ratio": 0,
+                "passive_ratio": 0,
+                "impact_density": 0,
+                "unique_lemma_ratio": 0,
+                "avg_sentence_length": 0,
+                "entity_density": 0,
+            }
+
+        sentences_raw = [s.strip() for s in re.split(r"[.!?]+", doc) if s.strip()]
+        total_sentences = len(sentences_raw) or 1
+
+        strong_verb_count = sum(1 for w in words if w in STRONG_VERBS)
+        number_tokens = sum(1 for w in words if any(ch.isdigit() for ch in w))
+        impact_density = min(number_tokens / total_sentences, 1)
+
+        noun_like_suffixes = ("tion", "ment", "ness", "ity", "ship", "ance", "ence")
+        verb_like_suffixes = ("ed", "ing", "ize", "ise")
+        noun_count = sum(1 for w in words if w.endswith(noun_like_suffixes))
+        verb_count = sum(1 for w in words if w in STRONG_VERBS or w.endswith(verb_like_suffixes))
+        passive_count = len(re.findall(r"\b(was|were|is|are|been|being|be)\s+\w+ed\b", doc.lower()))
+
+        unique_lemmas = set(words)
+        avg_sentence_length = total_tokens / total_sentences
+
+        return {
+            "noun_ratio": noun_count / total_tokens,
+            "verb_ratio": verb_count / total_tokens,
+            "strong_verb_ratio": (strong_verb_count / verb_count) if verb_count else 0,
+            "passive_ratio": passive_count / total_sentences,
+            "impact_density": impact_density,
+            "unique_lemma_ratio": len(unique_lemmas) / total_tokens,
+            "avg_sentence_length": avg_sentence_length,
+            "entity_density": 0,
+        }
 
     tokens = [t for t in doc if not t.is_punct and not t.is_space]
     total_tokens = len(tokens)
