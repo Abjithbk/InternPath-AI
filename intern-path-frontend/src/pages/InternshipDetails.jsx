@@ -17,7 +17,14 @@ const InternshipDetails = () => {
         )
     }
 
-    const skillsArray = internship.skills.split(',').map(s => s.trim())
+    const skillsArray = (internship?.skills || "")
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+
+    const missingSkills = Array.isArray(internship?.skill_gap)
+        ? internship.skill_gap
+        : []
 
     return (
         <div className="min-h-screen bg-[#F5F7FA] px-6 md:px-20 py-8">
@@ -157,7 +164,9 @@ const InternshipDetails = () => {
                             <AlertTriangle className="w-5 h-5 text-[#F59E0B] flex-shrink-0 mt-0.5" />
                             <div className="text-sm">
                                 <span className="text-[#92400E]">Missing Skills: </span>
-                                <span className="font-semibold text-[#92400E]">{internship.skill_gap.join(",") || ""}</span>
+                                <span className="font-semibold text-[#92400E]">
+                                    {missingSkills.length > 0 ? missingSkills.join(", ") : "None"}
+                                </span>
                             </div>
                         </div>
 

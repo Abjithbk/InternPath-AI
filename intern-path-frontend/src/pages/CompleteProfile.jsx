@@ -20,7 +20,7 @@ const CompleteProfile = () => {
 
   useEffect(() => {
     if (!loading && userProfile) {
-      navigate("/")
+      navigate("/dashboard")
     }
   },[navigate,loading,userProfile])
   const handleChange = (e) => {
@@ -127,6 +127,7 @@ const CompleteProfile = () => {
               type="text"
               name="college"
               value={userProfile?.college || ""}
+              defaultValue={"College of Engineering Chengannur"}
               readOnly
               placeholder="College"
               className="input"
@@ -136,6 +137,7 @@ const CompleteProfile = () => {
                 name="department"
                 value={userProfile?.department|| ""}
                 disabled
+                defaultValue={"CSE"}
                 className="input"
               >
                 <option value="">Select Department</option>
