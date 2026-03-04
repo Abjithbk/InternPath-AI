@@ -18,7 +18,7 @@ def score_user(user_id: int, db: Session = Depends(get_db)):
 
     row = db.execute(
         text("""
-            SELECT college, cgpa, skills, projects
+            SELECT year, semester, college, department, cgpa, skills, projects
             FROM userprofile
             WHERE user_id = :id
         """),

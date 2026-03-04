@@ -112,24 +112,30 @@ def score_projects(projects: list):
     stack_penalty = 0   
 
     
-    for project in projects:
+    for index, project in enumerate(projects, start=1):
         title = project.get("title", "Untitled Project")
-        desc = project.get("description", "").strip().lower()
+        raw_desc = project.get("description", "").strip()
+        desc = raw_desc.lower()
+        description_words = len([word for word in raw_desc.split() if word])
         tech_stack = project.get("tech_stack", [])
 
         issues = []
 
         
-        if len(desc) > 150:
+        if len(raw_desc) > 150 or description_words >= 30:
             long_desc_count += 1
         else:
-            issues.append("Project description is too short or vague")
+            issues.append(
+                f"Description is too short ({description_words} words). Add problem, implementation steps, and measurable outcome."
+            )
 
         
         if any(v in desc for v in ACTION_VERBS):
             action_count += 1
         else:
-            issues.append("No action verbs showing implementation or impact")
+            issues.append(
+                "No action-oriented impact language found (e.g., implemented, built, optimized)."
+            )
 
        
         if tech_stack:
@@ -160,14 +166,30 @@ def score_projects(projects: list):
 
         
         if issues:
+            action_points = []
+            if any("Description is too short" in issue for issue in issues):
+                action_points.append("expand description with architecture, modules, and outcomes")
+            if any("action-oriented" in issue for issue in issues):
+                action_points.append("rewrite bullets with strong action verbs and impact metrics")
+            if any("tech stack" in issue for issue in issues) or stack_level in {"weak", "missing"}:
+                action_points.append("add backend/database/deployment tools to the tech stack")
+
+            if not action_points:
+                action_points.append("improve implementation clarity and technical depth")
+
             result["project_feedback"].append({
                 "project": title,
                 "severity": "needs_improvement",
                 "issues": issues,
                 "action": (
-                    "Strengthen this project by improving the tech stack, "
-                    "adding backend/database components, and clearly explaining implementation."
-                )
+                    f"For project #{index} ({title}), "
+                    + "; ".join(action_points)
+                    + "."
+                ),
+                "diagnostics": {
+                    "description_words": description_words,
+                    "stack_level": stack_level
+                }
             })
         else:
             result["project_feedback"].append({

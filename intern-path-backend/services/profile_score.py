@@ -1,3 +1,5 @@
+import json
+
 from services.education import score_education
 from services.skills import score_skills
 from services.projects import score_projects
@@ -12,10 +14,40 @@ def readiness_level(score: int) -> str:
     return "High"
 
 
+def _normalize_skills(skills_raw):
+    if isinstance(skills_raw, list):
+        return [str(s) for s in skills_raw if s]
+    if isinstance(skills_raw, str):
+        try:
+            parsed = json.loads(skills_raw)
+            if isinstance(parsed, list):
+                return [str(s) for s in parsed if s]
+        except (json.JSONDecodeError, TypeError):
+            pass
+    return []
+
+
+def _normalize_projects(projects_raw):
+    if isinstance(projects_raw, list):
+        return [p for p in projects_raw if isinstance(p, dict)]
+    if isinstance(projects_raw, str):
+        try:
+            parsed = json.loads(projects_raw)
+            if isinstance(parsed, list):
+                return [p for p in parsed if isinstance(p, dict)]
+        except (json.JSONDecodeError, TypeError):
+            pass
+    return []
+
+
 def score_user_profile(profile: dict):
-    edu = score_education(profile)
-    skills = score_skills(profile.get("skills", []))
-    projects = score_projects(profile.get("projects", []))
+    normalized_profile = dict(profile)
+    normalized_profile["skills"] = _normalize_skills(profile.get("skills", []))
+    normalized_profile["projects"] = _normalize_projects(profile.get("projects", []))
+
+    edu = score_education(normalized_profile)
+    skills = score_skills(normalized_profile.get("skills", []))
+    projects = score_projects(normalized_profile.get("projects", []))
 
     education_score = edu["education_score"]
     skills_score = skills["skills_score"]
