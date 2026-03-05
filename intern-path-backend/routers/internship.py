@@ -1,13 +1,26 @@
+from functools import lru_cache
 
 from fastapi import APIRouter, Depends, HTTPException,Query
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from sqlalchemy import text, or_
 
 
 from database import models, database
 from dependencies import get_current_user
+from services.request_cache import request_cache
 
 router = APIRouter(prefix="/jobs", tags=["Internships"])
+
+
+@lru_cache(maxsize=5000)
+def _parse_skill_text(skill_text: str) -> frozenset[str]:
+    if not skill_text:
+        return frozenset()
+    return frozenset(
+        part.strip().lower()
+        for part in skill_text.split(",")
+        if part and part.strip()
+    )
 
 
 def get_db():
@@ -27,6 +40,7 @@ def fix_database():
             conn.commit()
 
         models.Base.metadata.create_all(bind=database.engine)
+        request_cache.delete_prefix("jobs:")
         return {"status": "success", "message": "Database rebuilt!"}
 
     except Exception as e:
@@ -37,11 +51,15 @@ def fix_database():
 @router.get("/")
 async def get_internship_details(db: Session = Depends(get_db)):
     try:
-        # Fetch every internship in the database
-        # order_by(models.Internship.id.desc()) ensures the newest data is at the top
+        cache_key = "jobs:list"
+        cached = request_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
         internships = db.query(models.Internship).order_by(models.Internship.id.desc()).all()
-        
-        return {"data": internships}
+        response = {"data": internships}
+        request_cache.set(cache_key, response, ttl_seconds=120)
+        return response
     except Exception as e:
         print(f"Database Error: {e}")
         raise HTTPException(status_code=500, detail="Database error. Try again...")
@@ -52,6 +70,10 @@ async def get_internship_details(db: Session = Depends(get_db)):
 @router.get("/filter")
 def filter_by_domain(domain: str,db:Session = Depends(get_db)):
     domain = domain.lower().strip()
+    cache_key = f"jobs:filter:{domain}"
+    cached = request_cache.get(cache_key)
+    if cached is not None:
+        return cached
 
     domain_keywords = {
         "ai": ["ai", "artificial intelligence", "ml", "machine learning", "llm", "nlp"],
@@ -72,26 +94,41 @@ def filter_by_domain(domain: str,db:Session = Depends(get_db)):
         if any(k in text for k in keywords):
             filtered.append(job)
 
-    return {
+    response = {
         "count":len(filtered),
         "data":filtered
     }
+    request_cache.set(cache_key, response, ttl_seconds=120)
+    return response
 
 @router.get("/search")
 def search_internship(q : str = Query(None,description="Search keyword"),db:Session = Depends(get_db)):
+    normalized_q = (q or "").strip().lower()
+    cache_key = f"jobs:search:{normalized_q or '__all__'}"
+    cached = request_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     if q:
         results = (db.query(models.Internship).filter(models.Internship.title.ilike(f"%{q}%")).all())
     else:
         results = db.query(models.Internship).all()
-    return {
+    response = {
         "data":results
-    }    
+    }
+    request_cache.set(cache_key, response, ttl_seconds=90)
+    return response
 
 @router.get("/recommendation")
 def recommend_internship(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
+    cache_key = f"jobs:recommend:{current_user.id}"
+    cached = request_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     profile = db.query(models.UserProfile)\
         .filter(models.UserProfile.user_id == current_user.id)\
         .first()
@@ -99,11 +136,20 @@ def recommend_internship(
     if not profile:
         return {"error": "Profile not found"}
 
-    # Convert user skills only once
-    user_skills = set(skill.strip().lower() for skill in profile.skills)
+    user_skills = {
+        skill.strip().lower()
+        for skill in (profile.skills or [])
+        if skill and skill.strip()
+    }
+
+    if not user_skills:
+        request_cache.set(cache_key, [], ttl_seconds=120)
+        return []
 
     # Fetch only required columns (FASTER)
-    internships = db.query(
+    conditions = [models.Internship.skills.ilike(f"%{skill}%") for skill in user_skills if len(skill) >= 2]
+
+    internship_query = db.query(
         models.Internship.id,
         models.Internship.title,
         models.Internship.company,
@@ -112,12 +158,17 @@ def recommend_internship(
         models.Internship.link,
         models.Internship.skills,
         models.Internship.stipend
-    ).all()
+    )
+
+    if conditions:
+        internship_query = internship_query.filter(or_(*conditions))
+
+    internships = internship_query.limit(1200).all()
 
     recommendations = []
 
     for internship in internships:
-        required_skills = set(skill.strip().lower() for skill in internship.skills.split(","))
+        required_skills = set(_parse_skill_text(internship.skills or ""))
 
         if not required_skills:
             continue
@@ -148,4 +199,6 @@ def recommend_internship(
     )
 
     # 🔥 Limit results (VERY IMPORTANT)
-    return recommendations[:20]
+    top_recommendations = recommendations[:20]
+    request_cache.set(cache_key, top_recommendations, ttl_seconds=180)
+    return top_recommendations

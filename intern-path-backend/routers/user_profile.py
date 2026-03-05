@@ -10,6 +10,7 @@ from database.schemas import (
     UserProfileUpdate
 )
 from dependencies import get_current_user
+from services.request_cache import request_cache
 
 def get_db():
     db = database.SessionLocal()
@@ -47,6 +48,7 @@ def create_user_profile(
     db.add(new_profile)
     db.commit()
     db.refresh(new_profile)
+    request_cache.delete(f"jobs:recommend:{current_user.id}")
     return new_profile
 
 @router.get("/",response_model=UserProfileOut)
@@ -96,4 +98,5 @@ def update_user_profile(
 
     db.commit()
     db.refresh(db_profile)
+    request_cache.delete(f"jobs:recommend:{current_user.id}")
     return db_profile
