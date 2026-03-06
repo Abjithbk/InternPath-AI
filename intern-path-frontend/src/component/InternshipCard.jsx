@@ -40,6 +40,7 @@ const InternshipCard = ({
               duration,
               stipend,
               skill_gap,
+              match_percentage: match,
               link,
             },
           },

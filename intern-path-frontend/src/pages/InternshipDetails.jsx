@@ -1,13 +1,16 @@
-import React from 'react'
+import React, { useContext, useEffect, useMemo, useState } from 'react'
 import { MapPin, Building2, AlertTriangle, ArrowLeft } from "lucide-react";
 import ProgressBar from "../component/ProgressBar";
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import api from '../axios';
+import { UserContext } from '../context/UserContext';
 
 const InternshipDetails = () => {
-    const { id } = useParams()
     const location = useLocation();
     const internship = location.state?.internship;
     const navigate = useNavigate()
+    const { user } = useContext(UserContext)
+    const [resumeQuality, setResumeQuality] = useState(null)
 
     if (!internship) {
         return (
@@ -25,6 +28,36 @@ const InternshipDetails = () => {
     const missingSkills = Array.isArray(internship?.skill_gap)
         ? internship.skill_gap
         : []
+
+    const skillMatch = useMemo(() => {
+        const rawMatch = internship?.match_percentage
+        if (!Number.isFinite(rawMatch)) return 0
+        return Math.max(0, Math.min(100, Math.round(rawMatch)))
+    }, [internship?.match_percentage])
+
+    useEffect(() => {
+        const fetchResumeQuality = async () => {
+            if (!user?.id) {
+                setResumeQuality(null)
+                return
+            }
+
+            try {
+                const res = await api.get(`/score/${user.id}`)
+                const rawScore = res?.data?.percentage_score
+                if (!Number.isFinite(rawScore)) {
+                    setResumeQuality(null)
+                    return
+                }
+
+                setResumeQuality(Math.max(0, Math.min(100, Math.round(rawScore))))
+            } catch (err) {
+                setResumeQuality(null)
+            }
+        }
+
+        fetchResumeQuality()
+    }, [user?.id])
 
     return (
         <div className="min-h-screen bg-[#F5F7FA] px-6 md:px-20 py-8">
@@ -142,9 +175,9 @@ const InternshipDetails = () => {
                             <p className="text-sm font-medium text-[#5A6C7D] mb-3">
                                 Skill Match
                             </p>
-                            <ProgressBar value={78} />
+                            <ProgressBar value={skillMatch} />
                             <p className="text-sm font-semibold text-[#2E3A59] mt-2">
-                                78% Match
+                                {skillMatch}% Match
                             </p>
                         </div>
 
@@ -153,9 +186,9 @@ const InternshipDetails = () => {
                             <p className="text-sm font-medium text-[#5A6C7D] mb-3">
                                 Resume Quality
                             </p>
-                            <ProgressBar value={65} />
+                            <ProgressBar value={resumeQuality ?? 0} />
                             <p className="text-sm font-semibold text-[#2E3A59] mt-2">
-                                65/100
+                                {resumeQuality !== null ? `${resumeQuality}/100` : "N/A"}
                             </p>
                         </div>
 
