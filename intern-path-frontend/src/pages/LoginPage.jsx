@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import { GoogleLogin } from "@react-oauth/google";
 import { useContext } from "react";
 import { UserContext } from "../context/UserContext";
+import { jwtDecode } from "jwt-decode";
 
 
 const FloatingInput = ({ label, name, type = "text", value, onChange, required, autoComplete }) => {
@@ -67,10 +68,21 @@ const LoginPage = () => {
 
     localStorage.setItem("access_token", token);
 
+    try {
+      const decoded = jwtDecode(token);
+      setUser({
+        id: decoded.sub,
+        name: decoded.username,
+      });
+    } catch {
+      setUser(null);
+    }
+
+    setUserProfile(null);
+
     toast.success("Login successful 🎉");
 
-    // Just reload app state
-    window.location.href = "/";
+    navigate("/");
 
   } catch (error) {
     toast.error(
@@ -98,9 +110,21 @@ const LoginPage = () => {
 
     localStorage.setItem("access_token", accessToken);
 
+    try {
+      const decoded = jwtDecode(accessToken);
+      setUser({
+        id: decoded.sub,
+        name: decoded.username,
+      });
+    } catch {
+      setUser(null);
+    }
+
+    setUserProfile(null);
+
     toast.success("Google Login Success 🎉");
 
-    window.location.href = "/";
+    navigate("/");
 
   } catch (err) {
     toast.error("Google login failed!");

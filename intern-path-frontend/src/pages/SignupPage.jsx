@@ -2,6 +2,9 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import api from '../axios'
 import { toast } from 'react-toastify'
+import { useContext } from 'react';
+import { UserContext } from '../context/UserContext';
+import { jwtDecode } from 'jwt-decode';
 
 // Floating Label Input Component
 const FloatingInput = ({ label, name, type = "text", value, onChange, required, autoComplete }) => {
@@ -43,6 +46,7 @@ const SignupPage = () => {
   })
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate();
+  const { setUser, setUserProfile } = useContext(UserContext);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -59,6 +63,19 @@ const SignupPage = () => {
         return;
       }
       localStorage.setItem("access_token", token)
+
+      try {
+        const decoded = jwtDecode(token)
+        setUser({
+          id: decoded.sub,
+          name: decoded.username,
+        })
+      } catch {
+        setUser(null)
+      }
+
+      // New users may not have a profile yet.
+      setUserProfile(null)
       toast.success("Signup successfully..")
       navigate("/");
     }

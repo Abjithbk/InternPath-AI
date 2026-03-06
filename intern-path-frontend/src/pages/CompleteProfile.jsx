@@ -9,8 +9,8 @@ const CompleteProfile = () => {
   const [formData, setFormData] = useState({
     year: "",
     semester: "",
-    college: "",
-    department: "",
+    college: "College of Engineering Chengannur",
+    department: "CSE",
     cgpa: "",
     skills: [],
     projects: [{ title: "", description: "" }],
@@ -60,11 +60,44 @@ const CompleteProfile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const year = Number(formData.year);
+    const semester = Number(formData.semester);
+    const cgpa = Number(formData.cgpa);
+
+    if (!formData.year || !Number.isFinite(year) || year < 1 || year > 4) {
+      toast.error("Enter a valid year (1-4)");
+      return;
+    }
+
+    if (!formData.semester || !Number.isFinite(semester) || semester < 1 || semester > 8) {
+      toast.error("Enter a valid semester (1-8)");
+      return;
+    }
+
+    if (!formData.cgpa || !Number.isFinite(cgpa) || cgpa < 0 || cgpa > 10) {
+      toast.error("Enter a valid CGPA (0-10)");
+      return;
+    }
+
+    if (formData.skills.length === 0) {
+      toast.error("Add at least one skill");
+      return;
+    }
+
+    const hasInvalidProject = formData.projects.some(
+      (project) => !project.title.trim() || !project.description.trim()
+    );
+    if (hasInvalidProject) {
+      toast.error("Each project must have title and description");
+      return;
+    }
+
     try {
       const res =  await api.post("/profile/",{
-            year:Number(formData.year),
-            semester:Number(formData.semester),
-            cgpa:Number(formData.cgpa),
+            year,
+            semester,
+            cgpa,
             skills:formData.skills,
             projects:formData.projects
         });
@@ -111,6 +144,9 @@ const CompleteProfile = () => {
               value={formData.year}
               onChange={handleChange}
               placeholder="Year"
+              min="1"
+              max="4"
+              required
               className="input"
             />
 
@@ -120,14 +156,16 @@ const CompleteProfile = () => {
               value={formData.semester}
               onChange={handleChange}
               placeholder="Semester"
+              min="1"
+              max="8"
+              required
               className="input"
             />
 
             <input
               type="text"
               name="college"
-              value={userProfile?.college || ""}
-              defaultValue={"College of Engineering Chengannur"}
+              value={formData.college}
               readOnly
               placeholder="College"
               className="input"
@@ -135,9 +173,8 @@ const CompleteProfile = () => {
 
             <select
                 name="department"
-                value={userProfile?.department|| ""}
+                value={formData.department}
                 disabled
-                defaultValue={"CSE"}
                 className="input"
               >
                 <option value="">Select Department</option>
@@ -154,6 +191,9 @@ const CompleteProfile = () => {
               value={formData.cgpa}
               onChange={handleChange}
               placeholder="CGPA"
+              min="0"
+              max="10"
+              required
               className="input"
             />
           </div>
