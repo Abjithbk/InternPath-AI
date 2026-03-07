@@ -2,6 +2,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, LogOut } from "lucide-react";
 import React, { useContext } from "react";
 import { UserContext } from "../context/UserContext";
+import Logo from "./Logo";
 
 const navItems = [
   { name: "Dashboard", path: "/dashboard" },
@@ -20,10 +21,10 @@ const Navbar = () => {
 
   return (
     <nav className="fixed top-0 left-0 w-full h-16 bg-[#f5f7ff] shadow-sm z-50">
-      <div className="w-full px-8 h-full flex items-center justify-between">
-
+      <div className="w-full px-6 h-full flex items-center">
         {/* LEFT */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 min-w-fit">
+          <Logo width={36} showText={false} className="self-center" />
           {isChatbotPage ? (
             <>
               <button
@@ -45,7 +46,7 @@ const Navbar = () => {
 
         {/* CENTER NAV */}
         {!isChatbotPage && (
-          <div className="flex justify-center gap-8">
+          <div className="flex-1 flex justify-center gap-8 px-8">
             {navItems.map((item) => (
               <NavLink
                 key={item.name}
@@ -65,7 +66,7 @@ const Navbar = () => {
         )}
 
         {/* RIGHT LOGOUT */}
-        <div className="flex justify-end">
+        <div className="ml-auto flex justify-end min-w-fit">
           {!isChatbotPage && (
             <button
               onClick={logout}

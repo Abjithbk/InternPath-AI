@@ -2,21 +2,20 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useContext } from 'react';
 import { UserContext } from '../context/UserContext';
+import Logo from '../component/Logo';
 import {
   Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
+  RadialLinearScale,
   PointElement,
   LineElement,
   Tooltip,
   Filler,
   Legend,
 } from 'chart.js';
-import { Line } from 'react-chartjs-2';
+import { Radar } from 'react-chartjs-2';
 
 ChartJS.register(
-  CategoryScale,
-  LinearScale,
+  RadialLinearScale,
   PointElement,
   LineElement,
   Tooltip,
@@ -39,7 +38,11 @@ const HeroSection = () => {
   return (
     <div className="bg-white min-h-screen">
       {/* Navbar */}
-      <nav className="flex justify-end items-center px-6 py-4 bg-slate-100">
+      <nav className="flex justify-between items-center px-6 py-3 bg-slate-100">
+        <div className="flex items-center gap-2 min-w-fit">
+          <Logo width={34} showText={false} className="self-center" />
+          <span className="text-lg font-bold text-indigo-600">InternPath</span>
+        </div>
         {
           user ? (
              <div className="flex items-center gap-4">
@@ -72,7 +75,7 @@ const HeroSection = () => {
           {/* Left Panel */}
           <div>
             <h2 className="text-lg font-medium text-slate-800 mb-4">
-              Your readiness insights
+               readiness insights
             </h2>
             <div className="h-72 rounded-xl bg-blue-50 border border-blue-100 p-4 animate-fade-in">
               <ReadinessChart />
@@ -143,17 +146,27 @@ const HeroSection = () => {
 
 const ReadinessChart = () => {
   const chartData = {
-    labels: Array.from({ length: 10 }, () => ''),
+    labels: [
+      'Technical Skills',
+      'Communication',
+      'Problem Solving',
+      'Projects',
+      'Resume Strength',
+      'Interview Prep',
+    ],
     datasets: [
       {
-        data: [42, 46, 44, 50, 53, 57, 55, 61, 64, 68],
-        borderColor: '#2563eb',
-        backgroundColor: 'rgba(37, 99, 235, 0.15)',
+        label: 'Internship Readiness Score',
+        data: [70, 60, 76, 63, 50, 55],
+        borderColor: '#4f46e5',
+        backgroundColor: 'rgba(79, 70, 229, 0.18)',
         fill: true,
-        tension: 0.35,
         borderWidth: 3,
-        pointRadius: 0,
-        pointHoverRadius: 0,
+        pointRadius: 4,
+        pointHoverRadius: 5,
+        pointBackgroundColor: '#ffffff',
+        pointBorderColor: '#4f46e5',
+        pointBorderWidth: 2,
       },
     ],
   };
@@ -163,29 +176,42 @@ const ReadinessChart = () => {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        display: false,
-      },
-      tooltip: {
-        enabled: false,
-      },
-    },
-    scales: {
-      y: {
-        display: false,
-        grid: {
-          display: false,
+        display: true,
+        position: 'top',
+        labels: {
+          color: '#4b5563',
+          boxWidth: 42,
         },
       },
-      x: {
-        display: false,
+      tooltip: { enabled: true },
+    },
+    scales: {
+      r: {
+        min: 0,
+        max: 100,
+        ticks: {
+          stepSize: 10,
+          backdropColor: 'transparent',
+          color: '#6b7280',
+        },
+        pointLabels: {
+          color: '#4b5563',
+          font: {
+            size: 12,
+            weight: 500,
+          },
+        },
         grid: {
-          display: false,
+          color: 'rgba(156, 163, 175, 0.30)',
+        },
+        angleLines: {
+          color: 'rgba(156, 163, 175, 0.30)',
         },
       },
     },
   };
 
-  return <Line data={chartData} options={chartOptions} />;
+  return <Radar data={chartData} options={chartOptions} />;
 };
 
 const DashboardCard = ({ title, bg, text }) => {

@@ -1,6 +1,9 @@
 import React from "react"
 import { MapPin } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import { useContext } from "react"
+import { UserContext } from "../context/UserContext"
+import { incrementApplicationsSentCount } from "../utils/applicationTracker"
 
 const InternshipCard = ({
   id,
@@ -16,6 +19,7 @@ const InternshipCard = ({
   maxMatch
 }) => {
   const navigate = useNavigate()
+  const { user } = useContext(UserContext)
   const skillsArray = skills.split(",").map((skill) => skill.trim())
 
   const getMatchStyle = () => {
@@ -109,7 +113,11 @@ const InternshipCard = ({
         </span>
 
         <button
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation()
+            incrementApplicationsSentCount(user?.id)
+            window.open(link, "_blank", "noopener,noreferrer")
+          }}
           className="
             bg-[#4B50C6]
             text-white

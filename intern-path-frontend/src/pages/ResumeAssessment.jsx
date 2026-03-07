@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { CheckCircle, XCircle, Upload,Loader } from "lucide-react";
 import api from '../axios'
+import { useContext } from "react";
+import { UserContext } from "../context/UserContext";
+import { setStoredResumeScore } from "../utils/resumeScoreTracker";
 const gradeColor = (grade) => {
   if (grade === "A") return "text-emerald-600";
   if (grade === "B") return "text-amber-500";
@@ -24,6 +27,7 @@ const ResumeAssessment = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [fileName, setFileName] = useState(null);
+  const { user } = useContext(UserContext);
 
   const handleUpload = async (e) => {
     const file = e.target.files[0];
@@ -44,6 +48,7 @@ const ResumeAssessment = () => {
         }
       });
       setResult(response.data);
+      setStoredResumeScore(user?.id, response.data?.overall_score);
     }
     catch(err) {
       setError("Failed to analyze resume. Please try again.");
