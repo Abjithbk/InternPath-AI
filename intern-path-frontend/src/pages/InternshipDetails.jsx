@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../axios';
 import { UserContext } from '../context/UserContext';
 import { incrementApplicationsSentCount } from '../utils/applicationTracker';
+import { getStoredResumeScore } from '../utils/resumeScoreTracker';
 
 const InternshipDetails = () => {
     const location = useLocation();
@@ -40,6 +41,12 @@ const InternshipDetails = () => {
         const fetchResumeQuality = async () => {
             if (!user?.id) {
                 setResumeQuality(null)
+                return
+            }
+
+            const uploadedResumeScore = getStoredResumeScore(user.id)
+            if (uploadedResumeScore !== null) {
+                setResumeQuality(uploadedResumeScore)
                 return
             }
 
