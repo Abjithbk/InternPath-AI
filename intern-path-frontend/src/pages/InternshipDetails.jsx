@@ -4,6 +4,7 @@ import ProgressBar from "../component/ProgressBar";
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../axios';
 import { UserContext } from '../context/UserContext';
+import { incrementApplicationsSentCount } from '../utils/applicationTracker';
 
 const InternshipDetails = () => {
     const location = useLocation();
@@ -205,7 +206,10 @@ const InternshipDetails = () => {
 
                         {/* Apply Button */}
                         <button
-                            onClick={() => window.open(internship.link, "_blank")}
+                            onClick={() => {
+                                incrementApplicationsSentCount(user?.id)
+                                window.open(internship.link, "_blank", "noopener,noreferrer")
+                            }}
                             className="
                                 w-full py-4 rounded-xl
                                 bg-[#4B50C6] text-white font-semibold text-lg

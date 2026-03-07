@@ -5,6 +5,7 @@ import MovingNotice from "../component/MovingNotice.jsx";
 import { useContext } from "react";
 import { UserContext } from "../context/UserContext.jsx";
 import { Send, TrendingUp } from "lucide-react";
+import { getApplicationsSentCount } from "../utils/applicationTracker";
 
 
 const Dashboard = () => {
@@ -22,11 +23,13 @@ const Dashboard = () => {
   const [techInput, setTechInput] = useState("");
   const [readinessData,setReadinessData] = useState(null);
   const [showReadinessModal,setShowReadinessModal] = useState(false)
+  const [applicationsSent, setApplicationsSent] = useState(0)
 const { user, userProfile, setUserProfile, loading } = useContext(UserContext);
 
   useEffect(() => {
     if(user?.id) {
       fetchReadinessSilently();
+      setApplicationsSent(getApplicationsSentCount(user.id));
     }
   },[user])
 
@@ -140,7 +143,7 @@ const { user, userProfile, setUserProfile, loading } = useContext(UserContext);
                   <Send/>
                 </div>
                 <p className="text-gray-700">
-                  <span className="font-semibold">12</span> Applications sent
+                  <span className="font-semibold">{applicationsSent}</span> Applications sent
                 </p>
               </div>
 
