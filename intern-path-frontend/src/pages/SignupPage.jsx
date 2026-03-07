@@ -7,32 +7,42 @@ import { UserContext } from '../context/UserContext';
 import { jwtDecode } from 'jwt-decode';
 
 // Floating Label Input Component
-const FloatingInput = ({ label, name, type = "text", value, onChange, required, autoComplete }) => {
+const FloatingInput = ({ label, name, type = "text", value, onChange, required, autoComplete, error }) => {
   const [focused, setFocused] = useState(false);
   const isFloated = focused || value.length > 0;
 
   return (
-    <div className="relative border border-gray-300 rounded-lg px-3 pt-3 pb-2 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-all">
-      <label
-        className={`absolute left-3 transition-all duration-200 pointer-events-none text-gray-600  ${
-          isFloated
-            ? '-top-2.5 text-xs bg-white px-1 text-indigo-500'
-            : 'top-3.5 text-sm'
+    <div>
+      <div
+        className={`relative border rounded-lg px-3 pt-3 pb-2 transition-all ${
+          error
+            ? 'border-red-500 focus-within:border-red-500 focus-within:ring-1 focus-within:ring-red-500'
+            : 'border-gray-300 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500'
         }`}
       >
-        {label}
-      </label>
-      <input
-        name={name}
-        type={type}
-        value={value}
-        onChange={onChange}
-        required={required}
-        autoComplete={autoComplete}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        className="w-full bg-transparent outline-none text-sm text-gray-800 pt-1"
-      />
+        <label
+          className={`absolute left-3 transition-all duration-200 pointer-events-none text-gray-600 ${
+            isFloated
+              ? '-top-2.5 text-xs bg-white px-1 text-indigo-500'
+              : 'top-3.5 text-sm'
+          }`}
+        >
+          {label}
+        </label>
+        <input
+          name={name}
+          type={type}
+          value={value}
+          onChange={onChange}
+          required={required}
+          autoComplete={autoComplete}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          aria-invalid={Boolean(error)}
+          className="w-full bg-transparent outline-none text-sm text-gray-800 pt-1"
+        />
+      </div>
+      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
     </div>
   );
 };
@@ -44,16 +54,60 @@ const SignupPage = () => {
     email: '',
     password: ''
   })
+  const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate();
   const { setUser, setUserProfile } = useContext(UserContext);
 
+  const validatePassword = (password) => {
+    if (password.length < 8) return 'Password must be at least 8 characters long';
+    if (!/[A-Z]/.test(password)) return 'Password must contain at least one uppercase letter';
+    if (!/[a-z]/.test(password)) return 'Password must contain at least one lowercase letter';
+    if (!/\d/.test(password)) return 'Password must contain at least one number';
+    if (!/[^A-Za-z0-9]/.test(password)) return 'Password must contain at least one special character';
+    return '';
+  };
+
+  const validateForm = () => {
+    const nextErrors = {};
+    if (!formData.password) {
+      nextErrors.password = 'Password is required';
+      return nextErrors;
+    }
+
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) nextErrors.password = passwordError;
+    return nextErrors;
+  };
+
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+
+    if (name === 'password') {
+      if (!value) {
+        setErrors((prev) => ({ ...prev, password: undefined }));
+        return;
+      }
+
+      const passwordError = validatePassword(value);
+      setErrors((prev) => ({ ...prev, password: passwordError || undefined }));
+      return;
+    }
+
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   }
 
   const handleSignup = async (e) => {
     e.preventDefault();
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
     setLoading(true)
     try {
       const res = await api.post("/signup", formData)
@@ -90,7 +144,26 @@ const SignupPage = () => {
       navigate("/");
     }
     catch (error) {
-      toast.error(error.response?.data?.message || "Something went wrong..")
+      const detail = error.response?.data?.detail;
+
+      if (Array.isArray(detail)) {
+        const apiErrors = {};
+        detail.forEach((item) => {
+          const field = item?.loc?.[item.loc.length - 1];
+          if (field) apiErrors[field] = item.msg;
+        });
+        if (Object.keys(apiErrors).length > 0) {
+          setErrors(apiErrors);
+          return;
+        }
+      }
+
+      if (typeof detail === 'string' && detail.toLowerCase().includes('password')) {
+        setErrors((prev) => ({ ...prev, password: detail }));
+        return;
+      }
+
+      toast.error(error.response?.data?.message || detail || "Something went wrong..")
     }
     finally {
       setLoading(false)
@@ -118,6 +191,7 @@ const SignupPage = () => {
               onChange={handleChange}
               required
               autoComplete="off"
+              error={errors.first_name}
             />
             <FloatingInput
               label="Second Name"
@@ -126,6 +200,7 @@ const SignupPage = () => {
               onChange={handleChange}
               required
               autoComplete="off"
+              error={errors.second_name}
             />
           </div>
 
@@ -138,6 +213,7 @@ const SignupPage = () => {
             onChange={handleChange}
             required
             autoComplete="off"
+            error={errors.email}
           />
 
           {/* Password */}
@@ -149,6 +225,7 @@ const SignupPage = () => {
             onChange={handleChange}
             required
             autoComplete="off"
+            error={errors.password}
           />
 
           {/* Submit Button */}

@@ -100,7 +100,7 @@ const { user, userProfile, setUserProfile, loading } = useContext(UserContext);
         <MovingNotice />
 
         {/* PROFILE BANNER */}
-        <div className="bg-indigo-600 rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between text-white shadow-lg">
+        <div className="bg-[#4F46E5] rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between text-white shadow-lg">
           {/* Left */}
           <div className="flex items-center gap-6">
             <div className="w-20 h-20 rounded-full bg-emerald-500 flex items-center justify-center text-3xl font-bold shadow-md">

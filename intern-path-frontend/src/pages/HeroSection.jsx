@@ -1,7 +1,29 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useContext } from 'react';
 import { UserContext } from '../context/UserContext';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Tooltip,
+  Filler,
+  Legend,
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Tooltip,
+  Filler,
+  Legend
+);
+
 const HeroSection = () => {
     const navigate = useNavigate();
     const { user } = useContext(UserContext);
@@ -52,7 +74,9 @@ const HeroSection = () => {
             <h2 className="text-lg font-medium text-slate-800 mb-4">
               Your readiness insights
             </h2>
-            <div className="h-64 rounded-xl bg-blue-50 border border-blue-100 animate-fade-in" />
+            <div className="h-72 rounded-xl bg-blue-50 border border-blue-100 p-4 animate-fade-in">
+              <ReadinessChart />
+            </div>
           </div>
 
           {/* Right Panel */}
@@ -116,6 +140,53 @@ const HeroSection = () => {
     </div>
   )
 }
+
+const ReadinessChart = () => {
+  const chartData = {
+    labels: Array.from({ length: 10 }, () => ''),
+    datasets: [
+      {
+        data: [42, 46, 44, 50, 53, 57, 55, 61, 64, 68],
+        borderColor: '#2563eb',
+        backgroundColor: 'rgba(37, 99, 235, 0.15)',
+        fill: true,
+        tension: 0.35,
+        borderWidth: 3,
+        pointRadius: 0,
+        pointHoverRadius: 0,
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        enabled: false,
+      },
+    },
+    scales: {
+      y: {
+        display: false,
+        grid: {
+          display: false,
+        },
+      },
+      x: {
+        display: false,
+        grid: {
+          display: false,
+        },
+      },
+    },
+  };
+
+  return <Line data={chartData} options={chartOptions} />;
+};
 
 const DashboardCard = ({ title, bg, text }) => {
   return (

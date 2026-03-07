@@ -9,32 +9,42 @@ import { UserContext } from "../context/UserContext";
 import { jwtDecode } from "jwt-decode";
 
 
-const FloatingInput = ({ label, name, type = "text", value, onChange, required, autoComplete }) => {
+const FloatingInput = ({ label, name, type = "text", value, onChange, required, autoComplete, error }) => {
   const [focused, setFocused] = useState(false);
   const isFloated = focused || value.length > 0;
 
   return (
-    <div className="relative border border-gray-300 rounded-lg px-3 pt-3 pb-2 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-all">
-      <label
-        className={`absolute left-3 transition-all duration-200 pointer-events-none text-gray-600 ${
-          isFloated
-            ? '-top-2.5 text-xs bg-white px-1 text-indigo-500'
-            : 'top-3.5 text-sm'
+    <div>
+      <div
+        className={`relative border rounded-lg px-3 pt-3 pb-2 transition-all ${
+          error
+            ? 'border-red-500 focus-within:border-red-500 focus-within:ring-1 focus-within:ring-red-500'
+            : 'border-gray-300 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500'
         }`}
       >
-        {label}
-      </label>
-      <input
-        name={name}
-        type={type}
-        value={value}
-        onChange={onChange}
-        required={required}
-        autoComplete={autoComplete}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        className="w-full bg-transparent outline-none text-sm text-gray-800 pt-1"
-      />
+        <label
+          className={`absolute left-3 transition-all duration-200 pointer-events-none text-gray-600 ${
+            isFloated
+              ? '-top-2.5 text-xs bg-white px-1 text-indigo-500'
+              : 'top-3.5 text-sm'
+          }`}
+        >
+          {label}
+        </label>
+        <input
+          name={name}
+          type={type}
+          value={value}
+          onChange={onChange}
+          required={required}
+          autoComplete={autoComplete}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          aria-invalid={Boolean(error)}
+          className="w-full bg-transparent outline-none text-sm text-gray-800 pt-1"
+        />
+      </div>
+      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
     </div>
   );
 };
@@ -44,17 +54,37 @@ const LoginPage = () => {
     email: "",
     password: "",
   });
+  const [errors, setErrors] = useState({});
   const { setUser, setUserProfile } = useContext(UserContext);
   const [loading,setLoading] = useState(false)
 
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+
+    if (errors[name] || errors.auth) {
+      setErrors((prev) => ({ ...prev, [name]: undefined, auth: undefined }));
+    }
   };
 
  const handleLogin = async (e) => {
   e.preventDefault();
+  const nextErrors = {};
+  if (!formData.email.trim()) {
+    nextErrors.email = "Email is required";
+  }
+  if (!formData.password) {
+    nextErrors.password = "Password is required";
+  }
+
+  if (Object.keys(nextErrors).length > 0) {
+    setErrors(nextErrors);
+    return;
+  }
+
+  setErrors({});
   setLoading(true)
 
   try {
@@ -94,11 +124,45 @@ const LoginPage = () => {
     navigate("/");
 
   } catch (error) {
-    toast.error(
-      error.response?.data?.message ||
-      error.response?.data?.detail ||
-      "Invalid email or password"
-    );
+    const detail = error.response?.data?.detail;
+
+    if (Array.isArray(detail)) {
+      const apiErrors = {};
+      detail.forEach((item) => {
+        const field = item?.loc?.[item.loc.length - 1];
+        if (field) apiErrors[field] = item.msg;
+      });
+      if (Object.keys(apiErrors).length > 0) {
+        setErrors(apiErrors);
+        return;
+      }
+    }
+
+    if (typeof detail === "string") {
+      const lowerDetail = detail.toLowerCase();
+
+      // Login page should never show signup password policy errors.
+      const isPasswordPolicyMessage =
+        lowerDetail.includes("at least") ||
+        lowerDetail.includes("uppercase") ||
+        lowerDetail.includes("lowercase") ||
+        lowerDetail.includes("special character");
+
+      if (isPasswordPolicyMessage) {
+        setErrors((prev) => ({ ...prev, password: "Invalid email or password" }));
+        return;
+      }
+
+      if (lowerDetail.includes("email") || lowerDetail.includes("password") || lowerDetail.includes("credentials")) {
+        setErrors((prev) => ({ ...prev, password: detail }));
+        return;
+      }
+      setErrors((prev) => ({ ...prev, auth: detail }));
+      return;
+    }
+
+    const fallbackMessage = error.response?.data?.message || "Invalid email or password";
+    setErrors((prev) => ({ ...prev, auth: fallbackMessage }));
   }
   finally {
     setLoading(false)
@@ -183,6 +247,9 @@ const LoginPage = () => {
 
         {/* Form */}
         <form onSubmit={handleLogin} className="space-y-5">
+          {errors.auth && (
+            <p className="text-sm text-red-600">{errors.auth}</p>
+          )}
 
           {/* Email */}
           <FloatingInput
@@ -193,6 +260,7 @@ const LoginPage = () => {
             onChange={handleChange}
             required
             autoComplete="off"
+            error={errors.email}
           />
 
           {/* Password */}
@@ -204,6 +272,7 @@ const LoginPage = () => {
             onChange={handleChange}
             required
             autoComplete="off"
+            error={errors.password}
           />
 
           {/* Submit Button */}
