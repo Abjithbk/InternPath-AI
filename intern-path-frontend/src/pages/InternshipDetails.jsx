@@ -11,7 +11,7 @@ const InternshipDetails = () => {
     const location = useLocation();
     const internship = location.state?.internship;
     const navigate = useNavigate()
-    const { user } = useContext(UserContext)
+    const { user, userProfile } = useContext(UserContext)
     const [resumeQuality, setResumeQuality] = useState(null)
 
     if (!internship) {
@@ -27,9 +27,62 @@ const InternshipDetails = () => {
         .map((s) => s.trim())
         .filter(Boolean)
 
-    const missingSkills = Array.isArray(internship?.skill_gap)
-        ? internship.skill_gap
-        : []
+    const normalizeSkills = (value) => {
+        if (!Array.isArray(value)) return []
+        return value
+            .map((skill) => String(skill || "").trim().toLowerCase())
+            .filter(Boolean)
+    }
+
+    const parseSkillGap = (value) => {
+        if (Array.isArray(value)) {
+            return value.map((skill) => String(skill || "").trim()).filter(Boolean)
+        }
+
+        if (typeof value !== "string") return []
+
+        const trimmed = value.trim()
+        if (!trimmed) return []
+
+        // Supports string payloads like "python, react" and JSON strings like '["python", "react"]'.
+        try {
+            const parsed = JSON.parse(trimmed)
+            if (Array.isArray(parsed)) {
+                return parsed.map((skill) => String(skill || "").trim()).filter(Boolean)
+            }
+        } catch (_) {
+            // Fall back to comma-splitting below.
+        }
+
+        return trimmed
+            .split(",")
+            .map((skill) => skill.trim())
+            .filter(Boolean)
+    }
+
+    const missingSkills = useMemo(() => {
+        const directSkillGap = parseSkillGap(internship?.skill_gap)
+        if (directSkillGap.length > 0) return directSkillGap
+
+        const requiredSkills = normalizeSkills(skillsArray)
+        const userSkills = new Set(normalizeSkills(userProfile?.skills))
+
+        if (requiredSkills.length === 0 || userSkills.size === 0) return []
+
+        return requiredSkills.filter((skill) => !userSkills.has(skill))
+    }, [internship?.skill_gap, skillsArray, userProfile?.skills])
+
+    const toTitleCase = (value) =>
+        String(value || "")
+            .toLowerCase()
+            .split(" ")
+            .filter(Boolean)
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ")
+
+    const missingSkillsText = missingSkills.length > 0
+        ? missingSkills.map(toTitleCase).join(", ")
+        : "None"
 
     const skillMatch = useMemo(() => {
         const rawMatch = internship?.match_percentage
@@ -206,7 +259,7 @@ const InternshipDetails = () => {
                             <div className="text-sm">
                                 <span className="text-[#92400E]">Missing Skills: </span>
                                 <span className="font-semibold text-[#92400E]">
-                                    {missingSkills.length > 0 ? missingSkills.join(", ") : "None"}
+                                    {missingSkillsText}
                                 </span>
                             </div>
                         </div>
